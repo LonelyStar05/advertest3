@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "experiment_id": "872ccaa0-8ee6-56c8-a7d7-edc6ddbc4410",
+  "attack_spec_id": "e3edcb22-e3bc-505a-92f4-9e30186fe26f",
+  "stage": "done",
+  "status": "not_reached",
+  "threshold_kind": "attack_success_rate",
+  "threshold": 0.95,
+  "class_filter": null,
+  "metric_kind": "asr",
+  "breaking_point": null,
+  "bracket": [
+    0.9,
+    0.9
+  ],
+  "confidence_interval": null,
+  "near_threshold": false,
+  "max_points": 23,
+  "points_used": 4,
+  "message": null,
+  "trajectory": [
+    {
+      "order": 0,
+      "level": 0,
+      "scope": "subset",
+      "drop": 0.0,
+      "drop_ci": null,
+      "synthetic": true,
+      "run_id": null
+    },
+    {
+      "order": 1,
+      "level": 0.3,
+      "scope": "subset",
+      "drop": 0.312,
+      "drop_ci": null,
+      "synthetic": false,
+      "run_id": "bef9c2d7-a55a-52a5-8677-1899c3cf7ebe"
+    },
+    {
+      "order": 2,
+      "level": 0.6,
+      "scope": "subset",
+      "drop": 0.604,
+      "drop_ci": null,
+      "synthetic": false,
+      "run_id": "d5cf6708-faac-54de-9a9e-889e2aa9efec"
+    },
+    {
+      "order": 3,
+      "level": 0.9,
+      "scope": "subset",
+      "drop": 0.861,
+      "drop_ci": null,
+      "synthetic": false,
+      "run_id": "9e817255-5dc4-5fc9-84c3-76667051140f"
+    },
+    {
+      "order": 4,
+      "level": 0.9,
+      "scope": "full",
+      "drop": 0.874,
+      "drop_ci": [
+        0.851,
+        0.896
+      ],
+      "synthetic": false,
+      "run_id": "d9841284-8e95-554e-98f5-4edde135b34d"
+    }
+  ]
+}

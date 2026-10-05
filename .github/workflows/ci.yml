@@ -1,0 +1,237 @@
+# CI của AdverTest (Phase 0 Group 8): lint, type check, unit test, contract, test nghiệm thu.
+name: CI
+
+on:
+  push:
+    branches: [main, "phase*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_FROZEN: "1"
+  PNPM_VERSION: "12.6.0"
+  NODE_VERSION: "22"
+
+jobs:
+  python:
+    name: Python (ruff, mypy, pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Phase 8: WeasyPrint (report PDF) cần pango, harfbuzz và font có dấu tiếng Việt, như
+      # docker/api/Dockerfile.
+      - run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --extra cpu
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync ruff format --check .
+      - run: uv run --no-sync mypy
+      # Test `db` chạy ở job acceptance (cần Postgres).
+      - run: uv run --no-sync pytest --ignore=tests/acceptance -m "not db"
+
+  frontend:
+    name: Frontend (eslint, tsc, vitest, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      # Build production và kiểm tra không chứa trang dev (/dev/contracts) hay dữ liệu mock.
+      - run: pnpm verify:build
+
+  contracts:
+    name: Contracts (sinh lại, validate mock)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: uv sync --extra cpu
+      - run: pnpm --dir frontend install --frozen-lockfile
+      # File sinh ra (JSON Schema, OpenAPI, TypeScript) phải khớp với bản đã commit.
+      - run: make contracts-check
+      # Mock, seed catalog và ràng buộc schema.
+      - run: uv run --no-sync pytest contracts
+
+  acceptance:
+    name: Test DB và nghiệm thu (Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: pg-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      # Mật khẩu chỉ dùng cho Postgres tạm của CI, không phải bí mật.
+      ADVERTEST_OWNER_PASSWORD: owner-ci
+      ADVERTEST_APP_PASSWORD: app-ci
+      ADVERTEST_TEST_OWNER_URL: postgresql+psycopg://advertest_owner:owner-ci@localhost:5432/advertest
+      ADVERTEST_TEST_APP_URL: postgresql+psycopg://advertest_app:app-ci@localhost:5432/advertest
+      ADVERTEST_TEST_MINIO_ENDPOINT: http://localhost:9000
+      ADVERTEST_TEST_MINIO_ACCESS_KEY: advertest
+      ADVERTEST_TEST_MINIO_SECRET_KEY: minio-ci-secret
+    steps:
+      - uses: actions/checkout@v7
+      # Phase 8: WeasyPrint (report PDF) cần pango, harfbuzz và font có dấu tiếng Việt, như
+      # docker/api/Dockerfile.
+      - run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
+      # Service container khởi động trước checkout nên không mount được script init;
+      # chạy cùng script đó từ runner để tạo role advertest_owner, advertest_app và database.
+      - name: Tạo DB role
+        env:
+          PGHOST: localhost
+          PGPASSWORD: pg-ci
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        run: bash docker/postgres/init/01-roles.sh
+      # MinIO cần tham số `server /data` nên không chạy được dưới dạng service container.
+      # Dùng cùng image (digest) với docker/compose.yaml.
+      - name: Chạy MinIO
+        run: |
+          image="$(sed -n 's/^x-minio-image: &minio-image //p' docker/compose.yaml)"
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER="$ADVERTEST_TEST_MINIO_ACCESS_KEY" \
+            -e MINIO_ROOT_PASSWORD="$ADVERTEST_TEST_MINIO_SECRET_KEY" \
+            -e MC_HOST_local="http://$ADVERTEST_TEST_MINIO_ACCESS_KEY:$ADVERTEST_TEST_MINIO_SECRET_KEY@127.0.0.1:9000" \
+            "$image" server /data
+          for _ in $(seq 1 30); do docker exec minio mc ready local && exit 0; sleep 1; done
+          exit 1
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - run: uv sync --extra cpu
+      - name: Cache fixture
+        uses: actions/cache@v6
+        with:
+          path: |
+            tests/fixtures
+            !tests/fixtures/checksums.json
+          key: fixtures-${{ hashFiles('tests/fixtures/checksums.json') }}
+      - run: make fixtures
+      - run: uv run --no-sync pytest -m db backend tests/acceptance
+      - run: make test-acceptance
+
+  e2e:
+    name: E2E Playwright (3 viewport, backend thật)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: pg-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      # Mật khẩu chỉ dùng cho Postgres tạm của CI, không phải bí mật.
+      ADVERTEST_OWNER_PASSWORD: owner-ci
+      ADVERTEST_APP_PASSWORD: app-ci
+      ADVERTEST_TEST_OWNER_URL: postgresql+psycopg://advertest_owner:owner-ci@localhost:5432/advertest
+      ADVERTEST_TEST_APP_URL: postgresql+psycopg://advertest_app:app-ci@localhost:5432/advertest
+      # Phase 5: artifact và worker thật cần MinIO (cùng cách chạy với job acceptance).
+      ADVERTEST_TEST_MINIO_ENDPOINT: http://localhost:9000
+      ADVERTEST_TEST_MINIO_ACCESS_KEY: advertest
+      ADVERTEST_TEST_MINIO_SECRET_KEY: minio-ci-secret
+    steps:
+      - uses: actions/checkout@v7
+      # Phase 8: WeasyPrint (report PDF) cần pango, harfbuzz và font có dấu tiếng Việt, như
+      # docker/api/Dockerfile.
+      - run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core
+      - name: Tạo DB role
+        env:
+          PGHOST: localhost
+          PGPASSWORD: pg-ci
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        run: bash docker/postgres/init/01-roles.sh
+      - name: Chạy MinIO
+        run: |
+          image="$(sed -n 's/^x-minio-image: &minio-image //p' docker/compose.yaml)"
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER="$ADVERTEST_TEST_MINIO_ACCESS_KEY" \
+            -e MINIO_ROOT_PASSWORD="$ADVERTEST_TEST_MINIO_SECRET_KEY" \
+            -e MC_HOST_local="http://$ADVERTEST_TEST_MINIO_ACCESS_KEY:$ADVERTEST_TEST_MINIO_SECRET_KEY@127.0.0.1:9000" \
+            "$image" server /data
+          for _ in $(seq 1 30); do docker exec minio mc ready local && exit 0; sleep 1; done
+          exit 1
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: uv sync --extra cpu
+      # Phase 5: dữ liệu fixture (5 ảnh KITTI, YOLOv8n) cho worker CPU của E2E.
+      - name: Cache fixture
+        uses: actions/cache@v6
+        with:
+          path: |
+            tests/fixtures
+            !tests/fixtures/checksums.json
+          key: fixtures-${{ hashFiles('tests/fixtures/checksums.json') }}
+      - run: make fixtures
+      - run: pnpm --dir frontend install --frozen-lockfile
+      - run: pnpm --dir frontend exec playwright install --with-deps chromium
+      - run: scripts/e2e.sh
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7

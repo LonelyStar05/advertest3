@@ -1,0 +1,201 @@
+# Môi trường phát triển AdverTest: `make up` / `make down` (biến lấy từ file env, mặc định .env ở gốc repo).
+# Postgres và MinIO không mở ra ngoài; các cổng được mở chỉ gắn vào 127.0.0.1.
+
+name: advertest
+
+x-minio-image: &minio-image cgr.dev/chainguard/minio@sha256:6a1d0b45c8669726bba580ced0bfa4cb9fdeed1ed636dfabd81d1577beb6937b
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Cần POSTGRES_PASSWORD}
+      ADVERTEST_DB: advertest
+      ADVERTEST_OWNER_PASSWORD: ${ADVERTEST_OWNER_PASSWORD:?Cần ADVERTEST_OWNER_PASSWORD}
+      ADVERTEST_APP_PASSWORD: ${ADVERTEST_APP_PASSWORD:?Cần ADVERTEST_APP_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Tạo role advertest_owner, advertest_app và database khi khởi tạo lần đầu.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Chỉ healthy khi script init đã chạy xong và role của app kết nối được qua TCP.
+      test: ["CMD-SHELL", "PGPASSWORD=\"$$ADVERTEST_APP_PASSWORD\" psql -h 127.0.0.1 -U advertest_app -d advertest -tAc 'select 1'"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  minio:
+    image: *minio-image
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:?Cần MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:?Cần MINIO_SECRET_KEY}
+      MC_HOST_local: http://${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}@127.0.0.1:9000
+    volumes:
+      - miniodata:/data
+    ports:
+      # API S3: worker (chạy trên máy hoặc container host network) dùng presigned URL qua cổng này.
+      - "127.0.0.1:${MINIO_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  minio-init:
+    # Tạo 4 bucket rồi thoát; chạy lại không lỗi (--ignore-existing).
+    image: cgr.dev/chainguard/minio-client@sha256:b2bd7824d23d3e3b15bedd7e87fbc3be29d2e213307b4f901e4a1d92356dc20f
+    command: ["mb", "--ignore-existing", "local/artifacts", "local/reports", "local/datasets", "local/models"]
+    environment:
+      MC_HOST_local: http://${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}@minio:9000
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+
+  mailpit:
+    # Phase 5: SMTP giả cho môi trường phát triển. API gửi qua mailpit:1025 trong mạng Docker;
+    # hộp thư xem ở http://127.0.0.1:${MAILPIT_UI_PORT:-8025} (chỉ gắn localhost).
+    image: axllent/mailpit:v1.27@sha256:e22dce5b36f93c77082e204a3942fb6b283b7896e057458400a4c88344c3df68
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api/Dockerfile
+      args:
+        TORCH: cpu
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    environment:
+      MIGRATION_DATABASE_URL: postgresql+psycopg://advertest_owner:${ADVERTEST_OWNER_PASSWORD}@postgres:5432/advertest
+      DATABASE_URL: postgresql+psycopg://advertest_app:${ADVERTEST_APP_PASSWORD}@postgres:5432/advertest
+      MINIO_ENDPOINT: http://minio:9000
+      # Presigned URL ký cho host mà worker gọi (chữ ký S3 gồm host).
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://127.0.0.1:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      # Phase 4: cookie Secure khi phục vụ qua HTTPS; proxy được tin X-Forwarded-For.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      # Mặc định tin cả mạng Docker (172.16.0.0/12): frontend gọi API qua proxy /api từ container
+      # riêng; không tin thì mọi người dùng chung IP của container đó (Phase 4 Group 7).
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1,172.16.0.0/12}
+      # Origin của frontend: link đặt lại mật khẩu do admin tạo trỏ về đây.
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
+      # Phase 5: khóa ký URL ảnh failure case (chung cho mọi tiến trình API); hiện ảnh dataset
+      # chưa làm mờ kèm cảnh báo chỉ khi DEV_ALLOW_UNBLURRED=true (không bật ở demo, bảo vệ).
+      ARTIFACT_TOKEN_SECRET: ${ARTIFACT_TOKEN_SECRET}
+      DEV_ALLOW_UNBLURRED: ${DEV_ALLOW_UNBLURRED:-false}
+      # Phase 5: email khi experiment kết thúc (outbox). Mặc định gửi vào Mailpit.
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_FROM: ${SMTP_FROM:-AdverTest <no-reply@advertest.local>}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+    volumes:
+      # `advertest-admin import-local` đọc ảnh theo đường dẫn tuyệt đối ghi lúc import vào
+      # LocalStore: mount thư mục dữ liệu vào đúng đường dẫn đó, chỉ đọc.
+      - ${ADVERTEST_DATA_DIR:-../data}:${ADVERTEST_DATA_DIR:-/data}:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    healthcheck:
+      # /health luôn trả 200; chỉ coi là healthy khi status = ok (Postgres và MinIO đều ok).
+      test: ["CMD", "python", "-c", "import json, sys, urllib.request; sys.exit(0 if json.load(urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3))['status'] == 'ok' else 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app/frontend
+    command: ["sh", "-c", "corepack enable && corepack prepare pnpm@12.6.0 --activate && pnpm install --frozen-lockfile && pnpm dev --host 0.0.0.0 --port 5173"]
+    environment:
+      VITE_API_BASE_URL: /api
+      VITE_USE_MOCKS: ${VITE_USE_MOCKS:-false}
+      API_PROXY_TARGET: http://api:8000
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+    volumes:
+      - ../frontend:/app/frontend
+      # Mock và type sinh từ contract (chế độ VITE_USE_MOCKS đọc contracts/mocks).
+      - ../contracts:/app/contracts:ro
+      # node_modules riêng của container, không dùng chung với máy chủ.
+      - frontend_node_modules:/app/frontend/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5173/"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+      start_period: 20s
+
+  # Worker trong Docker (mặc định chạy worker trực tiếp trên máy, xem docs/van-hanh-worker.md).
+  # Khởi động bằng docker/worker/up.sh cpu|gpu để có DOCKER_IMAGE_DIGEST của image vừa build.
+  # Không có thông tin đăng nhập Postgres hay MinIO: chỉ gọi API bằng token của compute target.
+  worker-cpu:
+    profiles: ["cpu"]
+    image: advertest-worker:cpu
+    build:
+      context: ..
+      dockerfile: docker/api/Dockerfile
+      args:
+        TORCH: cpu
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    entrypoint: ["advertest-worker", "run"]
+    # Host network: cùng URL API và MinIO (127.0.0.1) với worker chạy trực tiếp; chỉ Linux.
+    network_mode: host
+    environment: &worker-env
+      API_URL: http://127.0.0.1:${API_PORT:-8000}
+      WORKER_TOKEN: ${WORKER_TOKEN:-}
+      CACHE_DIR: /app/cache
+      DEVICE: ${WORKER_DEVICE:-}
+      DOCKER_IMAGE_DIGEST: ${DOCKER_IMAGE_DIGEST:-}
+    volumes:
+      - worker_cache:/app/cache
+    restart: unless-stopped
+
+  worker:
+    profiles: ["gpu"]
+    image: advertest-worker:gpu
+    build:
+      context: ..
+      dockerfile: docker/api/Dockerfile
+      args:
+        TORCH: cuda
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+    entrypoint: ["advertest-worker", "run"]
+    network_mode: host
+    environment: *worker-env
+    volumes:
+      - worker_cache:/app/cache
+    # Cần nvidia-container-toolkit trên máy.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  worker_cache:
+  pgdata:
+  miniodata:
+  frontend_node_modules:

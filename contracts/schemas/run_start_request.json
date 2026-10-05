@@ -1,0 +1,234 @@
+{
+  "$defs": {
+    "Environment": {
+      "additionalProperties": false,
+      "description": "Máy đã chạy run. Không thuộc fingerprint.",
+      "properties": {
+        "compute_target_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null khi chạy bằng CLI",
+          "title": "Compute Target Id"
+        },
+        "gpu_model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null khi chạy trên CPU",
+          "title": "Gpu Model"
+        },
+        "cuda_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cuda Version"
+        },
+        "driver_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Driver Version"
+        }
+      },
+      "required": [
+        "compute_target_id",
+        "gpu_model",
+        "cuda_version",
+        "driver_version"
+      ],
+      "title": "Environment",
+      "type": "object"
+    },
+    "FingerprintInputs": {
+      "additionalProperties": false,
+      "properties": {
+        "config_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Config Sha256",
+          "type": "string"
+        },
+        "weights_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Weights Sha256",
+          "type": "string"
+        },
+        "dataset_version_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Dataset Version Sha256",
+          "type": "string"
+        },
+        "slice_id": {
+          "format": "uuid",
+          "title": "Slice Id",
+          "type": "string"
+        },
+        "slice_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Slice Sha256",
+          "type": "string"
+        },
+        "attack_spec_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Attack Spec Sha256",
+          "type": "string"
+        },
+        "params": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Params",
+          "type": "object"
+        },
+        "seed": {
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "git_commit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Git Commit",
+          "type": "string"
+        },
+        "git_dirty": {
+          "description": "Working tree có thay đổi chưa commit lúc chạy",
+          "title": "Git Dirty",
+          "type": "boolean"
+        },
+        "lib_versions": {
+          "$ref": "#/$defs/LibVersions"
+        },
+        "docker_image_digest": {
+          "pattern": "^(none|sha256:[0-9a-f]{64})$",
+          "title": "Docker Image Digest",
+          "type": "string"
+        },
+        "patch_key": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 6: khóa patch (compute_patch_key) với run patch; bỏ khỏi JSON khi null nên fingerprint của run khác không đổi",
+          "title": "Patch Key"
+        },
+        "eval_image_ids_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 7: sha256 (canonical_json) của danh sách image_id đã sắp xếp mà run đánh giá, chỉ khi đánh giá trên tập con; null với run toàn slice (bỏ khỏi JSON) để điểm toàn slice trúng cache của run quét lưới",
+          "title": "Eval Image Ids Sha256"
+        }
+      },
+      "required": [
+        "config_sha256",
+        "weights_sha256",
+        "dataset_version_sha256",
+        "slice_id",
+        "slice_sha256",
+        "attack_spec_sha256",
+        "params",
+        "seed",
+        "git_commit",
+        "git_dirty",
+        "lib_versions",
+        "docker_image_digest"
+      ],
+      "title": "FingerprintInputs",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "LibVersions": {
+      "additionalProperties": false,
+      "properties": {
+        "torch": {
+          "title": "Torch",
+          "type": "string"
+        },
+        "art": {
+          "title": "Art",
+          "type": "string"
+        },
+        "ultralytics": {
+          "title": "Ultralytics",
+          "type": "string"
+        },
+        "torchmetrics": {
+          "title": "Torchmetrics",
+          "type": "string"
+        },
+        "numpy": {
+          "title": "Numpy",
+          "type": "string"
+        }
+      },
+      "required": [
+        "torch",
+        "art",
+        "ultralytics",
+        "torchmetrics",
+        "numpy"
+      ],
+      "title": "LibVersions",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "lease_id": {
+      "format": "uuid",
+      "title": "Lease Id",
+      "type": "string"
+    },
+    "fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Fingerprint",
+      "type": "string"
+    },
+    "fingerprint_inputs": {
+      "$ref": "#/$defs/FingerprintInputs"
+    },
+    "environment": {
+      "$ref": "#/$defs/Environment"
+    }
+  },
+  "required": [
+    "lease_id",
+    "fingerprint",
+    "fingerprint_inputs",
+    "environment"
+  ],
+  "title": "RunStartRequest",
+  "type": "object"
+}

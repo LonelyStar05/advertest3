@@ -1,0 +1,1749 @@
+{
+  "$defs": {
+    "AttackConfig": {
+      "additionalProperties": false,
+      "description": "Một attack trong experiment.",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "attack_spec_id": {
+          "format": "uuid",
+          "title": "Attack Spec Id",
+          "type": "string"
+        },
+        "spec_sha256": {
+          "description": "Chốt đúng version spec",
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Spec Sha256",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/RunMode"
+        },
+        "grid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GridConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "search": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SearchConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "seed": {
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "training_slice_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 6: bắt buộc khi spec có requires_training; không giao với slice đánh giá",
+          "title": "Training Slice Id"
+        }
+      },
+      "required": [
+        "attack_spec_id",
+        "spec_sha256",
+        "mode",
+        "seed"
+      ],
+      "title": "AttackConfig",
+      "type": "object"
+    },
+    "AttackKind": {
+      "enum": [
+        "attack",
+        "corruption",
+        "occlusion"
+      ],
+      "title": "AttackKind",
+      "type": "string"
+    },
+    "AttackRankingEntry": {
+      "additionalProperties": false,
+      "description": "Một attack trong bảng xếp hạng (Phase 6, `ml_core/metrics/ranking.py`).\n\nĐiểm của đường cong: (level / primary_param.max, relative_drop), thêm (0, 0) ở đầu; level bị\n`early_stop` lấy relative_drop của run kích hoạt. Diện tích tính đến `coverage`, không ngoại\nsuy.",
+      "properties": {
+        "attack_spec_id": {
+          "format": "uuid",
+          "title": "Attack Spec Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/AttackKind"
+        },
+        "auc_drop": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Diện tích hình thang; null khi ít hơn 2 điểm (không đủ dữ liệu)",
+          "title": "Auc Drop"
+        },
+        "max_relative_drop": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null khi không có level nào có metric",
+          "title": "Max Relative Drop"
+        },
+        "levels_evaluated": {
+          "description": "Số level có metric",
+          "minimum": 0,
+          "title": "Levels Evaluated",
+          "type": "integer"
+        },
+        "levels_early_stopped": {
+          "description": "Số level bị bỏ qua do dừng sớm",
+          "minimum": 0,
+          "title": "Levels Early Stopped",
+          "type": "integer"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "level / max lớn nhất được tính (có metric hoặc early_stop); null khi không có",
+          "title": "Coverage"
+        },
+        "partial": {
+          "description": "Có run stopped_limit hoặc metrics.partial",
+          "title": "Partial",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "attack_spec_id",
+        "name",
+        "kind",
+        "auc_drop",
+        "max_relative_drop",
+        "levels_evaluated",
+        "levels_early_stopped",
+        "coverage",
+        "partial"
+      ],
+      "title": "AttackRankingEntry",
+      "type": "object"
+    },
+    "CaseSeverity": {
+      "enum": [
+        "critical",
+        "major",
+        "minor",
+        "acceptable"
+      ],
+      "title": "CaseSeverity",
+      "type": "string"
+    },
+    "CaseVerdictKind": {
+      "description": "Loại verdict của một failure case (Phase 8).",
+      "enum": [
+        "safety_relevant",
+        "acceptable",
+        "annotation_issue"
+      ],
+      "title": "CaseVerdictKind",
+      "type": "string"
+    },
+    "CaseVerdictView": {
+      "additionalProperties": false,
+      "description": "Một version verdict; version lớn nhất là hiện hành, mọi version được giữ.",
+      "properties": {
+        "severity": {
+          "$ref": "#/$defs/CaseSeverity"
+        },
+        "kind": {
+          "$ref": "#/$defs/CaseVerdictKind"
+        },
+        "mitigation": {
+          "anyOf": [
+            {
+              "maxLength": 4000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Bắt buộc khi kind = safety_relevant",
+          "title": "Mitigation"
+        },
+        "failure_case_id": {
+          "format": "uuid",
+          "title": "Failure Case Id",
+          "type": "string"
+        },
+        "version": {
+          "exclusiveMinimum": 0,
+          "title": "Version",
+          "type": "integer"
+        },
+        "reviewer": {
+          "$ref": "#/$defs/UserRef"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "severity",
+        "kind",
+        "failure_case_id",
+        "version",
+        "reviewer",
+        "created_at"
+      ],
+      "title": "CaseVerdictView",
+      "type": "object"
+    },
+    "ChecklistCode": {
+      "description": "Điều kiện trạng thái phía server trước khi chấp nhận (Phase 8, kickoff: chỉ gồm điều kiện\ntrạng thái; trường nhập thiếu là 422, sai người là 403).",
+      "enum": [
+        "protocol_not_dev",
+        "required_cases_reviewed"
+      ],
+      "title": "ChecklistCode",
+      "type": "string"
+    },
+    "ChecklistItem": {
+      "additionalProperties": false,
+      "description": "Một điều kiện trạng thái trước khi chấp nhận (Phase 8).",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ChecklistCode"
+        },
+        "satisfied": {
+          "title": "Satisfied",
+          "type": "boolean"
+        },
+        "detail": {
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "satisfied",
+        "detail"
+      ],
+      "title": "ChecklistItem",
+      "type": "object"
+    },
+    "ComplianceCode": {
+      "description": "Mục kiểm tra tuân thủ protocol khi ước lượng, tạo experiment và gửi duyệt (Phase 8).",
+      "enum": [
+        "protocol_active",
+        "attack_present",
+        "spec_sha256",
+        "mode",
+        "grid_levels",
+        "search_threshold",
+        "search_range",
+        "search_tol",
+        "search_bootstrap",
+        "min_slice_size",
+        "model_gradients"
+      ],
+      "title": "ComplianceCode",
+      "type": "string"
+    },
+    "ComplianceItem": {
+      "additionalProperties": false,
+      "description": "Một mục tuân thủ protocol (Phase 8): trong ước lượng, ExperimentDetail và lỗi 422\n`not_compliant` khi tạo experiment.",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ComplianceCode"
+        },
+        "attack_spec_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Attack bắt buộc của mục này; null với mục không theo attack",
+          "title": "Attack Spec Name"
+        },
+        "satisfied": {
+          "title": "Satisfied",
+          "type": "boolean"
+        },
+        "detail": {
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "satisfied",
+        "detail"
+      ],
+      "title": "ComplianceItem",
+      "type": "object"
+    },
+    "ComputeKind": {
+      "enum": [
+        "local",
+        "rented"
+      ],
+      "title": "ComputeKind",
+      "type": "string"
+    },
+    "ComputeTargetRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ComputeKind"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind"
+      ],
+      "title": "ComputeTargetRef",
+      "type": "object"
+    },
+    "CriterionResult": {
+      "additionalProperties": false,
+      "description": "Kết quả tự động (chỉ tham khảo) của `pass_criteria[index]`.",
+      "properties": {
+        "index": {
+          "description": "Chỉ số trong body.pass_criteria của protocol",
+          "minimum": 0,
+          "title": "Index",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/CriterionStatus"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "max_drop_at_level: đại lượng tại level; min_breaking_point: điểm gãy (cận trên bracket); null khi không có",
+          "title": "Value"
+        },
+        "detail": {
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "index",
+        "status",
+        "value",
+        "detail"
+      ],
+      "title": "CriterionResult",
+      "type": "object"
+    },
+    "CriterionStatus": {
+      "enum": [
+        "pass",
+        "fail",
+        "inconclusive"
+      ],
+      "title": "CriterionStatus",
+      "type": "string"
+    },
+    "DisplayMode": {
+      "description": "Cách hiển thị ảnh failure case (Phase 5; Phase 6 thêm làm mờ theo từng case).",
+      "enum": [
+        "normal",
+        "hidden_unanonymized",
+        "dev_unblurred"
+      ],
+      "title": "DisplayMode",
+      "type": "string"
+    },
+    "EvalScope": {
+      "description": "Tập ảnh mà run đánh giá (Phase 7).",
+      "enum": [
+        "full",
+        "subset"
+      ],
+      "title": "EvalScope",
+      "type": "string"
+    },
+    "ExperimentConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "protocol_id": {
+          "format": "uuid",
+          "title": "Protocol Id",
+          "type": "string"
+        },
+        "model_version_id": {
+          "format": "uuid",
+          "title": "Model Version Id",
+          "type": "string"
+        },
+        "slice_id": {
+          "format": "uuid",
+          "title": "Slice Id",
+          "type": "string"
+        },
+        "class_mapping_id": {
+          "format": "uuid",
+          "title": "Class Mapping Id",
+          "type": "string"
+        },
+        "compute_target_id": {
+          "format": "uuid",
+          "title": "Compute Target Id",
+          "type": "string"
+        },
+        "attacks": {
+          "items": {
+            "$ref": "#/$defs/AttackConfig"
+          },
+          "minItems": 1,
+          "title": "Attacks",
+          "type": "array"
+        },
+        "limit": {
+          "$ref": "#/$defs/Limit"
+        }
+      },
+      "required": [
+        "protocol_id",
+        "model_version_id",
+        "slice_id",
+        "class_mapping_id",
+        "compute_target_id",
+        "attacks",
+        "limit"
+      ],
+      "title": "ExperimentConfig",
+      "type": "object"
+    },
+    "ExperimentStatus": {
+      "enum": [
+        "draft",
+        "queued",
+        "running",
+        "completed",
+        "submitted_for_review",
+        "in_review",
+        "approved",
+        "changes_requested",
+        "rejected",
+        "cancelled"
+      ],
+      "title": "ExperimentStatus",
+      "type": "string"
+    },
+    "GridConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "levels": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 1,
+          "title": "Levels",
+          "type": "array"
+        },
+        "early_stop": {
+          "description": "Phase 6: bỏ level lớn hơn khi model đã sụp (mAP@0.5 <= 5% mAP sạch)",
+          "title": "Early Stop",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "levels"
+      ],
+      "title": "GridConfig",
+      "type": "object"
+    },
+    "Limit": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/LimitKind"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "Tiền (budget) hoặc giây (time)",
+          "title": "Value"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "title": "Limit",
+      "type": "object"
+    },
+    "LimitKind": {
+      "enum": [
+        "budget",
+        "time"
+      ],
+      "title": "LimitKind",
+      "type": "string"
+    },
+    "MapPair": {
+      "additionalProperties": false,
+      "properties": {
+        "map50": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Map50",
+          "type": "number"
+        },
+        "map50_95": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Map50 95",
+          "type": "number"
+        }
+      },
+      "required": [
+        "map50",
+        "map50_95"
+      ],
+      "title": "MapPair",
+      "type": "object"
+    },
+    "ModelRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "ID của model version",
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "ModelRef",
+      "type": "object"
+    },
+    "ModelVerdict": {
+      "description": "Kết luận của reviewer về model; tách khỏi quyết định chấp nhận bài test (Phase 8).",
+      "enum": [
+        "meets_criteria",
+        "does_not_meet",
+        "conditional"
+      ],
+      "title": "ModelVerdict",
+      "type": "string"
+    },
+    "Progress": {
+      "additionalProperties": false,
+      "properties": {
+        "images_done": {
+          "minimum": 0,
+          "title": "Images Done",
+          "type": "integer"
+        },
+        "images_total": {
+          "minimum": 0,
+          "title": "Images Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "images_done",
+        "images_total"
+      ],
+      "title": "Progress",
+      "type": "object"
+    },
+    "ProtocolRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ProtocolStatus"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "status"
+      ],
+      "title": "ProtocolRef",
+      "type": "object"
+    },
+    "ProtocolStatus": {
+      "enum": [
+        "active",
+        "retired",
+        "dev"
+      ],
+      "title": "ProtocolStatus",
+      "type": "string"
+    },
+    "ReportStatus": {
+      "enum": [
+        "generating",
+        "ready",
+        "failed"
+      ],
+      "title": "ReportStatus",
+      "type": "string"
+    },
+    "ReportView": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "experiment_id": {
+          "format": "uuid",
+          "title": "Experiment Id",
+          "type": "string"
+        },
+        "experiment_name": {
+          "title": "Experiment Name",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ReportStatus"
+        },
+        "model_verdict": {
+          "$ref": "#/$defs/ModelVerdict"
+        },
+        "approved_by": {
+          "$ref": "#/$defs/UserRef"
+        },
+        "approved_at": {
+          "format": "date-time",
+          "title": "Approved At",
+          "type": "string"
+        },
+        "generated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Có khi và chỉ khi status = ready",
+          "title": "Generated At"
+        },
+        "json_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Có khi và chỉ khi status = ready",
+          "title": "Json Sha256"
+        },
+        "pdf_sha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Có khi và chỉ khi status = ready",
+          "title": "Pdf Sha256"
+        }
+      },
+      "required": [
+        "id",
+        "experiment_id",
+        "experiment_name",
+        "status",
+        "model_verdict",
+        "approved_by",
+        "approved_at",
+        "generated_at",
+        "json_sha256",
+        "pdf_sha256"
+      ],
+      "title": "ReportView",
+      "type": "object"
+    },
+    "RequiredCase": {
+      "additionalProperties": false,
+      "description": "Case bắt buộc review: top `cases_to_review_per_attack` theo `severity_score` của mỗi\nattack bắt buộc (cùng điểm theo `image_id`).",
+      "properties": {
+        "failure_case_id": {
+          "format": "uuid",
+          "title": "Failure Case Id",
+          "type": "string"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "attack_spec_name": {
+          "title": "Attack Spec Name",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "number"
+        },
+        "image_id": {
+          "minLength": 1,
+          "title": "Image Id",
+          "type": "string"
+        },
+        "severity_score": {
+          "exclusiveMinimum": 0,
+          "title": "Severity Score",
+          "type": "number"
+        },
+        "display_mode": {
+          "$ref": "#/$defs/DisplayMode"
+        },
+        "current_verdict": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaseVerdictView"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "failure_case_id",
+        "run_id",
+        "attack_spec_name",
+        "level",
+        "image_id",
+        "severity_score",
+        "display_mode",
+        "current_verdict"
+      ],
+      "title": "RequiredCase",
+      "type": "object"
+    },
+    "ReviewDecision": {
+      "enum": [
+        "approve",
+        "changes_requested",
+        "reject"
+      ],
+      "title": "ReviewDecision",
+      "type": "string"
+    },
+    "ReviewView": {
+      "additionalProperties": false,
+      "description": "Trạng thái review của experiment (`ExperimentDetail.review`).",
+      "properties": {
+        "submitted_at": {
+          "format": "date-time",
+          "title": "Submitted At",
+          "type": "string"
+        },
+        "submission_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Submission Note"
+        },
+        "run_explanations": {
+          "items": {
+            "$ref": "#/$defs/RunExplanation"
+          },
+          "title": "Run Explanations",
+          "type": "array"
+        },
+        "assignee": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UserRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Người đang nhận hoặc đã quyết định"
+        },
+        "claimed_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Claimed At"
+        },
+        "decision": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewDecision"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decided_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Decided At"
+        },
+        "model_verdict": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ModelVerdict"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conclusion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Conclusion"
+        },
+        "mitigation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mitigation"
+        },
+        "inconclusive_justification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Inconclusive Justification"
+        },
+        "criteria_results": {
+          "description": "Khi chưa quyết định: tính tại thời điểm đọc; sau quyết định: bản đã lưu",
+          "items": {
+            "$ref": "#/$defs/CriterionResult"
+          },
+          "title": "Criteria Results",
+          "type": "array"
+        },
+        "checklist": {
+          "description": "Điều kiện trạng thái trước khi chấp nhận; sau quyết định: bản đã lưu",
+          "items": {
+            "$ref": "#/$defs/ChecklistItem"
+          },
+          "title": "Checklist",
+          "type": "array"
+        },
+        "required_cases": {
+          "items": {
+            "$ref": "#/$defs/RequiredCase"
+          },
+          "title": "Required Cases",
+          "type": "array"
+        },
+        "comments_count": {
+          "minimum": 0,
+          "title": "Comments Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "submitted_at",
+        "submission_note",
+        "run_explanations",
+        "assignee",
+        "claimed_at",
+        "decision",
+        "decided_at",
+        "model_verdict",
+        "conclusion",
+        "mitigation",
+        "inconclusive_justification",
+        "criteria_results",
+        "checklist",
+        "required_cases",
+        "comments_count"
+      ],
+      "title": "ReviewView",
+      "type": "object"
+    },
+    "RunCounts": {
+      "additionalProperties": false,
+      "description": "Số run theo từng `RunStatus`.",
+      "properties": {
+        "queued": {
+          "minimum": 0,
+          "title": "Queued",
+          "type": "integer"
+        },
+        "running": {
+          "minimum": 0,
+          "title": "Running",
+          "type": "integer"
+        },
+        "completed": {
+          "minimum": 0,
+          "title": "Completed",
+          "type": "integer"
+        },
+        "failed": {
+          "minimum": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "skipped": {
+          "minimum": 0,
+          "title": "Skipped",
+          "type": "integer"
+        },
+        "stopped_limit": {
+          "minimum": 0,
+          "title": "Stopped Limit",
+          "type": "integer"
+        },
+        "cancelled": {
+          "minimum": 0,
+          "title": "Cancelled",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "skipped",
+        "stopped_limit",
+        "cancelled"
+      ],
+      "title": "RunCounts",
+      "type": "object"
+    },
+    "RunExplanation": {
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "author": {
+          "$ref": "#/$defs/UserRef"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "author",
+        "text",
+        "created_at"
+      ],
+      "title": "RunExplanation",
+      "type": "object"
+    },
+    "RunMode": {
+      "enum": [
+        "grid",
+        "search"
+      ],
+      "title": "RunMode",
+      "type": "string"
+    },
+    "SearchConfig": {
+      "additionalProperties": false,
+      "description": "Cấu hình tự tìm ngưỡng (Phase 7, requirements.md mục Behaviour).\n\nKiểm tra phụ thuộc spec, slice và mapping (`lo`, `hi` trong dải của spec; `subset_size` không\nquá số ảnh slice; `absolute_drop` không quá mAP sạch; `class_filter` là class đích) ở backend.",
+      "properties": {
+        "threshold_kind": {
+          "$ref": "#/$defs/ThresholdKind"
+        },
+        "threshold": {
+          "description": "relative_drop, attack_success_rate: (0, 1]; absolute_drop: (0, mAP sạch]",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "lo": {
+          "title": "Lo",
+          "type": "number"
+        },
+        "hi": {
+          "title": "Hi",
+          "type": "number"
+        },
+        "tol": {
+          "description": "Độ rộng khoảng khi dừng chia đôi; wizard mặc định (hi - lo) / 256. Tham số rời rạc chia đôi theo chỉ số nên không dùng tol",
+          "exclusiveMinimum": 0,
+          "title": "Tol",
+          "type": "number"
+        },
+        "coarse_n": {
+          "default": 4,
+          "description": "Số level quét thô",
+          "maximum": 8,
+          "minimum": 3,
+          "title": "Coarse N",
+          "type": "integer"
+        },
+        "subset_size": {
+          "default": 100,
+          "description": "Số ảnh của tập con; wizard cảnh báo khi dưới 20",
+          "minimum": 2,
+          "title": "Subset Size",
+          "type": "integer"
+        },
+        "class_filter": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Một class đích của mapping; null là mọi class",
+          "title": "Class Filter"
+        },
+        "bootstrap_samples": {
+          "default": 200,
+          "description": "Số mẫu bootstrap; 0 là không tính khoảng tin cậy",
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Bootstrap Samples",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "threshold_kind",
+        "threshold",
+        "lo",
+        "hi",
+        "tol"
+      ],
+      "title": "SearchConfig",
+      "type": "object"
+    },
+    "SearchResult": {
+      "additionalProperties": false,
+      "description": "Kết quả tìm ngưỡng của một attack (Phase 7).\n\nWorker gửi bản tạm thời sau mỗi điểm (`stage` khác `done`, `status` null) và bản cuối\n(`stage = done`) kèm bootstrap. `bracket` là khoảng hiện tại, kể cả khi dừng giữa chừng.",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "experiment_id": {
+          "format": "uuid",
+          "title": "Experiment Id",
+          "type": "string"
+        },
+        "attack_spec_id": {
+          "format": "uuid",
+          "title": "Attack Spec Id",
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/$defs/SearchStage"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SearchStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null khi và chỉ khi stage khác done"
+        },
+        "threshold_kind": {
+          "$ref": "#/$defs/ThresholdKind"
+        },
+        "threshold": {
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "class_filter": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Class Filter"
+        },
+        "metric_kind": {
+          "description": "map50: mAP@0.5; class_ap50: AP@0.5 của class_filter; asr: ASR mọi object; class_asr: ASR object của class_filter. Suy từ threshold_kind và class_filter",
+          "enum": [
+            "map50",
+            "class_ap50",
+            "asr",
+            "class_asr"
+          ],
+          "title": "Metric Kind",
+          "type": "string"
+        },
+        "breaking_point": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Có khi và chỉ khi status là found hoặc non_monotonic (= bracket[1])",
+          "title": "Breaking Point"
+        },
+        "bracket": {
+          "description": "Khoảng hiện tại, kể cả khi dừng giữa chừng",
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bracket",
+          "type": "array"
+        },
+        "confidence_interval": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Khoảng tin cậy 95% của điểm gãy; null nếu chưa tính bootstrap",
+          "title": "Confidence Interval"
+        },
+        "near_threshold": {
+          "description": "Khoảng tin cậy của d(b) có cận dưới < ngưỡng, hoặc của d(a) có cận trên >= ngưỡng; false khi chưa tính bootstrap",
+          "title": "Near Threshold",
+          "type": "boolean"
+        },
+        "max_points": {
+          "description": "Giới hạn trên số run (ml_core/search/bounds.py)",
+          "exclusiveMinimum": 0,
+          "title": "Max Points",
+          "type": "integer"
+        },
+        "points_used": {
+          "description": "Số điểm đã đánh giá (không gồm synthetic)",
+          "minimum": 0,
+          "title": "Points Used",
+          "type": "integer"
+        },
+        "message": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Có khi và chỉ khi status = failed",
+          "title": "Message"
+        },
+        "trajectory": {
+          "items": {
+            "$ref": "#/$defs/TrajectoryPoint"
+          },
+          "title": "Trajectory",
+          "type": "array"
+        }
+      },
+      "required": [
+        "experiment_id",
+        "attack_spec_id",
+        "stage",
+        "status",
+        "threshold_kind",
+        "threshold",
+        "class_filter",
+        "metric_kind",
+        "bracket",
+        "near_threshold",
+        "max_points",
+        "points_used",
+        "trajectory"
+      ],
+      "title": "SearchResult",
+      "type": "object"
+    },
+    "SearchStage": {
+      "description": "Giai đoạn của một lần tìm ngưỡng (Phase 7, requirements.md mục Thuật toán).",
+      "enum": [
+        "coarse",
+        "bisect_subset",
+        "confirm",
+        "bisect_full",
+        "done"
+      ],
+      "title": "SearchStage",
+      "type": "string"
+    },
+    "SearchStatus": {
+      "enum": [
+        "found",
+        "not_reached",
+        "below_min",
+        "stopped_limit",
+        "non_monotonic",
+        "failed"
+      ],
+      "title": "SearchStatus",
+      "type": "string"
+    },
+    "SliceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "size": {
+          "exclusiveMinimum": 0,
+          "title": "Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "size"
+      ],
+      "title": "SliceRef",
+      "type": "object"
+    },
+    "SubmitCheckCode": {
+      "description": "Điều kiện gửi duyệt (Phase 8, `POST /experiments/{id}/submit`), hiển thị trong hộp gửi\nduyệt trước khi gửi.",
+      "enum": [
+        "experiment_completed",
+        "protocol_not_dev",
+        "runs_final",
+        "no_dirty_runs",
+        "required_cases_visible"
+      ],
+      "title": "SubmitCheckCode",
+      "type": "string"
+    },
+    "SubmitCheckItem": {
+      "additionalProperties": false,
+      "description": "Một điều kiện gửi duyệt (Phase 8).",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/SubmitCheckCode"
+        },
+        "satisfied": {
+          "title": "Satisfied",
+          "type": "boolean"
+        },
+        "detail": {
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "satisfied",
+        "detail"
+      ],
+      "title": "SubmitCheckItem",
+      "type": "object"
+    },
+    "ThresholdKind": {
+      "enum": [
+        "relative_drop",
+        "absolute_drop",
+        "attack_success_rate"
+      ],
+      "title": "ThresholdKind",
+      "type": "string"
+    },
+    "TrajectoryPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "order": {
+          "description": "Thứ tự đánh giá, bắt đầu từ 0, liên tục",
+          "minimum": 0,
+          "title": "Order",
+          "type": "integer"
+        },
+        "level": {
+          "title": "Level",
+          "type": "number"
+        },
+        "scope": {
+          "$ref": "#/$defs/EvalScope"
+        },
+        "drop": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Đại lượng so với ngưỡng (theo metric_kind); null khi run không có metric",
+          "title": "Drop"
+        },
+        "drop_ci": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Phase 7: khoảng tin cậy bootstrap 95%; chỉ điểm toàn slice, null khi chưa tính hoặc bootstrap_samples = 0",
+          "title": "Drop Ci"
+        },
+        "synthetic": {
+          "default": false,
+          "description": "Phase 7: level \"không biến đổi\" của spec (eps = 0, tỉ lệ che = 0): drop = 0 theo định nghĩa, không chạy, không có run",
+          "title": "Synthetic",
+          "type": "boolean"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null khi và chỉ khi synthetic",
+          "title": "Run Id"
+        }
+      },
+      "required": [
+        "order",
+        "level",
+        "scope",
+        "drop",
+        "run_id"
+      ],
+      "title": "TrajectoryPoint",
+      "type": "object"
+    },
+    "UserRef": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "full_name": {
+          "title": "Full Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "full_name"
+      ],
+      "title": "UserRef",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "owner": {
+      "$ref": "#/$defs/UserRef"
+    },
+    "status": {
+      "$ref": "#/$defs/ExperimentStatus"
+    },
+    "model": {
+      "$ref": "#/$defs/ModelRef"
+    },
+    "slice": {
+      "$ref": "#/$defs/SliceRef"
+    },
+    "compute_target": {
+      "$ref": "#/$defs/ComputeTargetRef"
+    },
+    "run_counts": {
+      "$ref": "#/$defs/RunCounts"
+    },
+    "progress": {
+      "$ref": "#/$defs/Progress",
+      "description": "Tổng số ảnh đã xử lý trên mọi run"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "finished_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "null khi draft, queued hoặc running",
+      "title": "Finished At"
+    },
+    "config": {
+      "$ref": "#/$defs/ExperimentConfig"
+    },
+    "config_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Config Sha256",
+      "type": "string"
+    },
+    "protocol": {
+      "$ref": "#/$defs/ProtocolRef"
+    },
+    "limit": {
+      "$ref": "#/$defs/Limit"
+    },
+    "processing_seconds_used": {
+      "minimum": 0,
+      "title": "Processing Seconds Used",
+      "type": "number"
+    },
+    "queue_position": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Chỉ có khi status = queued",
+      "title": "Queue Position"
+    },
+    "cloned_from": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Cloned From"
+    },
+    "clean_metrics": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MapPair"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "mAP ảnh sạch; null khi chưa run nào có metric"
+    },
+    "attack_ranking": {
+      "description": "Phase 6: mỗi attack quét lưới của config một dòng (Phase 7: không gồm attack tìm ngưỡng), giảm dần theo auc_drop, null xếp cuối",
+      "items": {
+        "$ref": "#/$defs/AttackRankingEntry"
+      },
+      "title": "Attack Ranking",
+      "type": "array"
+    },
+    "search_results": {
+      "description": "Phase 7: SearchResult mới nhất của từng attack tìm ngưỡng đã có điểm (cập nhật khi đang chạy)",
+      "items": {
+        "$ref": "#/$defs/SearchResult"
+      },
+      "title": "Search Results",
+      "type": "array"
+    },
+    "compliance": {
+      "description": "Phase 8: tuân thủ protocol version đã gắn; rỗng với protocol dev",
+      "items": {
+        "$ref": "#/$defs/ComplianceItem"
+      },
+      "title": "Compliance",
+      "type": "array"
+    },
+    "submit_check": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/SubmitCheckItem"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Phase 8: điều kiện gửi duyệt; chỉ có khi status = completed (backend Phase 8 luôn điền khi completed)",
+      "title": "Submit Check"
+    },
+    "runs_requiring_explanation": {
+      "description": "Phase 8: run của attack bắt buộc không completed (trừ skipped do cached, early_stop) phải có lời giải trình khi gửi duyệt; chỉ có khi status = completed",
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "title": "Runs Requiring Explanation",
+      "type": "array"
+    },
+    "review": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReviewView"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Phase 8: có khi và chỉ khi experiment đã gửi duyệt (submitted_for_review, in_review, approved, changes_requested, rejected)"
+    },
+    "report": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ReportView"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Phase 8: report chính thức; chỉ có khi status = approved"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "owner",
+    "status",
+    "model",
+    "slice",
+    "compute_target",
+    "run_counts",
+    "progress",
+    "created_at",
+    "finished_at",
+    "config",
+    "config_sha256",
+    "protocol",
+    "limit",
+    "processing_seconds_used",
+    "queue_position",
+    "cloned_from",
+    "clean_metrics"
+  ],
+  "title": "ExperimentDetail",
+  "type": "object"
+}

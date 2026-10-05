@@ -1,0 +1,33 @@
+/// <reference types="vitest/config" />
+import path from 'node:path'
+
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+
+const mocksDir = path.resolve(import.meta.dirname, '../contracts/mocks')
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: { '@': path.resolve(import.meta.dirname, './src') },
+  },
+  server: {
+    // Chế độ mock đọc JSON trong contracts/mocks (ngoài thư mục frontend).
+    fs: { allow: [import.meta.dirname, mocksDir] },
+    // Gọi API cùng origin: /api/* chuyển sang backend, bỏ tiền tố /api.
+    proxy: {
+      '/api': {
+        target: process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        // Thêm X-Forwarded-For: backend giới hạn đăng nhập sai theo IP gốc (TRUSTED_PROXIES).
+        xfwd: true,
+        rewrite: (p) => p.replace(/^\/api/, ''),
+      },
+    },
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
+})

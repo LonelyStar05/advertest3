@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "attack_spec_id": "449774ff-ded0-5909-b549-90a1e410bd62",
+  "spec_sha256": "68fe8f72f176fe27981eadfe8b5e98bb36b8e85fc41c97b5702e2e149f52d72c",
+  "mode": "search",
+  "grid": null,
+  "search": {
+    "threshold_kind": "attack_success_rate",
+    "threshold": 0.5,
+    "lo": 0,
+    "hi": 32,
+    "tol": 0.125,
+    "coarse_n": 4,
+    "subset_size": 100,
+    "class_filter": "person",
+    "bootstrap_samples": 0
+  },
+  "seed": 42
+}

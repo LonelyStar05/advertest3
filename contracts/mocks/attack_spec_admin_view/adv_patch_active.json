@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "name": "adv_patch",
+  "version": 2,
+  "kind": "attack",
+  "access": "white_box",
+  "art_class": "RobustDPatch",
+  "primary_param": {
+    "name": "area_ratio",
+    "type": "continuous",
+    "min": 0.02,
+    "max": 0.25,
+    "values": null,
+    "unit": "ratio"
+  },
+  "fixed_params": {
+    "shape": "square",
+    "placement": "image_region_center",
+    "brightness_range": [
+      0.8,
+      1.2
+    ]
+  },
+  "cost_model": {
+    "passes_per_image": null,
+    "cpu_only": true
+  },
+  "requires_gradients": true,
+  "requires_training": true,
+  "training": {
+    "max_iter": 200,
+    "learning_rate": 0.02,
+    "sample_size": 1,
+    "checkpoint_every": 50,
+    "max_training_images": 50,
+    "batch_size": 8
+  },
+  "id": "94f2e240-e595-5b21-a5c7-219a2d478f9e",
+  "spec_sha256": "c96cbc20a4c2320986b30d8f8178c1a642e36549008fca6cf491752bfec4955d",
+  "is_active": true
+}

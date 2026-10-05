@@ -1,0 +1,316 @@
+{
+  "$defs": {
+    "AttackConfig": {
+      "additionalProperties": false,
+      "description": "Một attack trong experiment.",
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "attack_spec_id": {
+          "format": "uuid",
+          "title": "Attack Spec Id",
+          "type": "string"
+        },
+        "spec_sha256": {
+          "description": "Chốt đúng version spec",
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Spec Sha256",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/$defs/RunMode"
+        },
+        "grid": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GridConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "search": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SearchConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "seed": {
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        },
+        "training_slice_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 6: bắt buộc khi spec có requires_training; không giao với slice đánh giá",
+          "title": "Training Slice Id"
+        }
+      },
+      "required": [
+        "attack_spec_id",
+        "spec_sha256",
+        "mode",
+        "seed"
+      ],
+      "title": "AttackConfig",
+      "type": "object"
+    },
+    "GridConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "levels": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 1,
+          "title": "Levels",
+          "type": "array"
+        },
+        "early_stop": {
+          "description": "Phase 6: bỏ level lớn hơn khi model đã sụp (mAP@0.5 <= 5% mAP sạch)",
+          "title": "Early Stop",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "levels"
+      ],
+      "title": "GridConfig",
+      "type": "object"
+    },
+    "Limit": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/LimitKind"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "description": "Tiền (budget) hoặc giây (time)",
+          "title": "Value"
+        }
+      },
+      "required": [
+        "kind",
+        "value"
+      ],
+      "title": "Limit",
+      "type": "object"
+    },
+    "LimitKind": {
+      "enum": [
+        "budget",
+        "time"
+      ],
+      "title": "LimitKind",
+      "type": "string"
+    },
+    "RunMode": {
+      "enum": [
+        "grid",
+        "search"
+      ],
+      "title": "RunMode",
+      "type": "string"
+    },
+    "SearchConfig": {
+      "additionalProperties": false,
+      "description": "Cấu hình tự tìm ngưỡng (Phase 7, requirements.md mục Behaviour).\n\nKiểm tra phụ thuộc spec, slice và mapping (`lo`, `hi` trong dải của spec; `subset_size` không\nquá số ảnh slice; `absolute_drop` không quá mAP sạch; `class_filter` là class đích) ở backend.",
+      "properties": {
+        "threshold_kind": {
+          "$ref": "#/$defs/ThresholdKind"
+        },
+        "threshold": {
+          "description": "relative_drop, attack_success_rate: (0, 1]; absolute_drop: (0, mAP sạch]",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "lo": {
+          "title": "Lo",
+          "type": "number"
+        },
+        "hi": {
+          "title": "Hi",
+          "type": "number"
+        },
+        "tol": {
+          "description": "Độ rộng khoảng khi dừng chia đôi; wizard mặc định (hi - lo) / 256. Tham số rời rạc chia đôi theo chỉ số nên không dùng tol",
+          "exclusiveMinimum": 0,
+          "title": "Tol",
+          "type": "number"
+        },
+        "coarse_n": {
+          "default": 4,
+          "description": "Số level quét thô",
+          "maximum": 8,
+          "minimum": 3,
+          "title": "Coarse N",
+          "type": "integer"
+        },
+        "subset_size": {
+          "default": 100,
+          "description": "Số ảnh của tập con; wizard cảnh báo khi dưới 20",
+          "minimum": 2,
+          "title": "Subset Size",
+          "type": "integer"
+        },
+        "class_filter": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Một class đích của mapping; null là mọi class",
+          "title": "Class Filter"
+        },
+        "bootstrap_samples": {
+          "default": 200,
+          "description": "Số mẫu bootstrap; 0 là không tính khoảng tin cậy",
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Bootstrap Samples",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "threshold_kind",
+        "threshold",
+        "lo",
+        "hi",
+        "tol"
+      ],
+      "title": "SearchConfig",
+      "type": "object"
+    },
+    "ThresholdKind": {
+      "enum": [
+        "relative_drop",
+        "absolute_drop",
+        "attack_success_rate"
+      ],
+      "title": "ThresholdKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Body của `POST /experiments` và `POST /experiments/estimate`.",
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "protocol_id": {
+      "format": "uuid",
+      "title": "Protocol Id",
+      "type": "string"
+    },
+    "model_version_id": {
+      "format": "uuid",
+      "title": "Model Version Id",
+      "type": "string"
+    },
+    "slice_id": {
+      "format": "uuid",
+      "title": "Slice Id",
+      "type": "string"
+    },
+    "class_mapping_id": {
+      "format": "uuid",
+      "title": "Class Mapping Id",
+      "type": "string"
+    },
+    "compute_target_id": {
+      "format": "uuid",
+      "title": "Compute Target Id",
+      "type": "string"
+    },
+    "attacks": {
+      "items": {
+        "$ref": "#/$defs/AttackConfig"
+      },
+      "minItems": 1,
+      "title": "Attacks",
+      "type": "array"
+    },
+    "limit": {
+      "$ref": "#/$defs/Limit"
+    },
+    "name": {
+      "anyOf": [
+        {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Bỏ trống: server đặt `<model> · <slice> · <YYYY-MM-DD UTC>`",
+      "title": "Name"
+    },
+    "cloned_from": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Experiment gốc khi nhân bản",
+      "title": "Cloned From"
+    }
+  },
+  "required": [
+    "protocol_id",
+    "model_version_id",
+    "slice_id",
+    "class_mapping_id",
+    "compute_target_id",
+    "attacks",
+    "limit"
+  ],
+  "title": "ExperimentCreate",
+  "type": "object"
+}

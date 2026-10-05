@@ -1,0 +1,484 @@
+{
+  "$defs": {
+    "ClassRunMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "clean_ap50": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Clean Ap50"
+        },
+        "attacked_ap50": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Attacked Ap50"
+        },
+        "attack_success_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 7: ASR chỉ tính object của class này (ngưỡng có class_filter); null khi không có object nào của class được detect đúng trên ảnh sạch, hoặc run trước Phase 7",
+          "title": "Attack Success Rate"
+        }
+      },
+      "required": [
+        "clean_ap50",
+        "attacked_ap50"
+      ],
+      "title": "ClassRunMetrics",
+      "type": "object"
+    },
+    "Cost": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Amount"
+        },
+        "currency": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Currency",
+          "type": "string"
+        }
+      },
+      "required": [
+        "amount",
+        "currency"
+      ],
+      "title": "Cost",
+      "type": "object"
+    },
+    "EvalScope": {
+      "description": "Tập ảnh mà run đánh giá (Phase 7).",
+      "enum": [
+        "full",
+        "subset"
+      ],
+      "title": "EvalScope",
+      "type": "string"
+    },
+    "MapPair": {
+      "additionalProperties": false,
+      "properties": {
+        "map50": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Map50",
+          "type": "number"
+        },
+        "map50_95": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Map50 95",
+          "type": "number"
+        }
+      },
+      "required": [
+        "map50",
+        "map50_95"
+      ],
+      "title": "MapPair",
+      "type": "object"
+    },
+    "Progress": {
+      "additionalProperties": false,
+      "properties": {
+        "images_done": {
+          "minimum": 0,
+          "title": "Images Done",
+          "type": "integer"
+        },
+        "images_total": {
+          "minimum": 0,
+          "title": "Images Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "images_done",
+        "images_total"
+      ],
+      "title": "Progress",
+      "type": "object"
+    },
+    "RunMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "clean": {
+          "$ref": "#/$defs/MapPair"
+        },
+        "attacked": {
+          "$ref": "#/$defs/MapPair"
+        },
+        "relative_drop": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null khi mAP@0.5 sạch bằng 0",
+          "title": "Relative Drop"
+        },
+        "absolute_drop": {
+          "title": "Absolute Drop",
+          "type": "number"
+        },
+        "attack_success_rate": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null khi không có object nào được detect đúng trên ảnh sạch (|C| = 0)",
+          "title": "Attack Success Rate"
+        },
+        "per_class": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/ClassRunMetrics"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Per Class"
+        },
+        "partial": {
+          "default": false,
+          "description": "true khi metric chỉ tính trên phần ảnh đã xử lý (stopped_limit)",
+          "title": "Partial",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "clean",
+        "attacked",
+        "relative_drop",
+        "absolute_drop",
+        "attack_success_rate"
+      ],
+      "title": "RunMetrics",
+      "type": "object"
+    },
+    "RunResult": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "experiment_id": {
+          "format": "uuid",
+          "title": "Experiment Id",
+          "type": "string"
+        },
+        "attack_spec_id": {
+          "format": "uuid",
+          "title": "Attack Spec Id",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "number"
+        },
+        "status": {
+          "$ref": "#/$defs/RunStatus"
+        },
+        "status_reason": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StatusReason"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "progress": {
+          "$ref": "#/$defs/Progress"
+        },
+        "metrics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RunMetrics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gpu_seconds": {
+          "minimum": 0,
+          "title": "Gpu Seconds",
+          "type": "number"
+        },
+        "cost": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cost"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "null với máy local"
+        },
+        "failure_case_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Failure Case Ids",
+          "type": "array"
+        },
+        "manifest_uri": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Manifest Uri"
+        },
+        "cached_from_run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Run gốc khi status = skipped với code = cached (Phase 3)",
+          "title": "Cached From Run Id"
+        },
+        "scope": {
+          "$ref": "#/$defs/EvalScope",
+          "description": "Phase 7: tập ảnh được đánh giá; subset chỉ có ở run của tìm ngưỡng"
+        },
+        "search_order": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 7: thứ tự điểm trong lần tìm ngưỡng của attack (TrajectoryPoint.order); null với run quét lưới",
+          "title": "Search Order"
+        },
+        "predictions_key": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 7: khóa file prediction theo ảnh trong runs/<run_id>/ (bootstrap); run trúng cache có bản sao file của run gốc (đề xuất contract 001); null khi chưa có metric, run trước Phase 7, hoặc run gốc không có file",
+          "title": "Predictions Key"
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Fingerprint",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "experiment_id",
+        "attack_spec_id",
+        "level",
+        "status",
+        "progress",
+        "gpu_seconds",
+        "failure_case_ids",
+        "fingerprint"
+      ],
+      "title": "RunResult",
+      "type": "object"
+    },
+    "RunStatus": {
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "skipped",
+        "stopped_limit",
+        "cancelled"
+      ],
+      "title": "RunStatus",
+      "type": "string"
+    },
+    "SkipReason": {
+      "enum": [
+        "cached",
+        "incompatible",
+        "early_stop"
+      ],
+      "title": "SkipReason",
+      "type": "string"
+    },
+    "StatusReason": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StopReason"
+            },
+            {
+              "$ref": "#/$defs/SkipReason"
+            },
+            {
+              "enum": [
+                "error",
+                "cancelled"
+              ],
+              "type": "string"
+            }
+          ],
+          "title": "Code"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "trigger_run_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Phase 6: run đã kích hoạt dừng sớm; có khi và chỉ khi code = early_stop",
+          "title": "Trigger Run Id"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "StatusReason",
+      "type": "object"
+    },
+    "StopReason": {
+      "enum": [
+        "budget",
+        "time"
+      ],
+      "title": "StopReason",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "enum": [
+        "run",
+        "skip_cached"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "cached_from_run_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Chỉ có khi skip_cached",
+      "title": "Cached From Run Id"
+    },
+    "cached_result": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RunResult"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Kết quả của run gốc (completed); chỉ có khi skip_cached"
+    }
+  },
+  "required": [
+    "action"
+  ],
+  "title": "RunStartResponse",
+  "type": "object"
+}
