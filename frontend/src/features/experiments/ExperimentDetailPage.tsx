@@ -26,6 +26,8 @@ import { ExperimentStatusSummary } from './ExperimentStatusSummary'
 import { humanTime } from './format'
 import { ProgressBar } from './ProgressBar'
 import { nextStep } from './next-step'
+import { lifecycle } from '@/features/flow/lifecycle'
+import { LifecycleStepper } from '@/features/flow/LifecycleStepper'
 import { NextStepPanel } from './NextStep'
 import { ReviewTab } from './ReviewTab'
 import { SubmitDialog } from './SubmitDialog'
@@ -90,7 +92,6 @@ export function ExperimentDetailPage() {
     e.protocol.status !== 'dev'
   const step = nextStep(e, me, canOpenSubmit)
   const tabs = TABS.filter(([key]) => key !== 'review' || e.review)
-  const fixClone = e.status === 'changes_requested'
   const tab: Tab = tabs.some(([key]) => key === requested) ? requested : 'overview'
 
   return (
@@ -113,10 +114,11 @@ export function ExperimentDetailPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {can(me, 'experiment.create') && (
-              <Button variant={fixClone ? 'default' : 'outline'} asChild>
+              // Bước chính (kể cả "Nhân bản để sửa") nằm ở khối bước tiếp theo: ở đây chỉ là nút phụ.
+              <Button variant="outline" asChild>
                 <Link to={`/experiments/new?clone=${e.id}`}>
                   <Copy aria-hidden="true" />
-                  {fixClone ? 'Nhân bản để sửa' : 'Nhân bản'}
+                  Nhân bản
                 </Link>
               </Button>
             )}
@@ -135,7 +137,10 @@ export function ExperimentDetailPage() {
           </span>
         </p>
       </header>
-      <NextStepPanel experiment={e} view={step} onSubmit={() => setSubmitting(true)} />
+      <div className="flex flex-col gap-3">
+        <LifecycleStepper stages={lifecycle(e)} />
+        <NextStepPanel experiment={e} view={step} onSubmit={() => setSubmitting(true)} />
+      </div>
       {cancel.isError && <FormAlert>{errorMessage(cancel.error)}</FormAlert>}
       <div role="tablist" aria-label="Chi tiết experiment" className="seg self-start">
         {tabs.map(([key, label]) => (

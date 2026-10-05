@@ -289,6 +289,8 @@ class AttackSpecRow(Base):
     spec: Mapped[dict[str, Any]] = mapped_column(JSONB)
     spec_sha256: Mapped[str] = mapped_column(Sha256, unique=True)
     is_active: Mapped[bool] = mapped_column(server_default=text("true"))
+    # Bổ sung 2026-10 (migration 0011): `AttackSpecDisplay`, ngoài hash; null khi chưa khai.
+    display: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
 
 
 class Protocol(Base):

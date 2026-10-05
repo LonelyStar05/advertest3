@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "description": "Một ảnh mẫu chọn được ở Thử nhanh (`GET /quick-try/images`).",
+  "properties": {
+    "dataset_version_id": {
+      "format": "uuid",
+      "title": "Dataset Version Id",
+      "type": "string"
+    },
+    "dataset_name": {
+      "title": "Dataset Name",
+      "type": "string"
+    },
+    "image_id": {
+      "title": "Image Id",
+      "type": "string"
+    },
+    "width": {
+      "exclusiveMinimum": 0,
+      "title": "Width",
+      "type": "integer"
+    },
+    "height": {
+      "exclusiveMinimum": 0,
+      "title": "Height",
+      "type": "integer"
+    },
+    "num_objects": {
+      "description": "Số annotation của ảnh trong manifest",
+      "minimum": 0,
+      "title": "Num Objects",
+      "type": "integer"
+    },
+    "thumbnail": {
+      "description": "WebP rộng 320 px, đã làm mờ khi dataset chưa ẩn danh",
+      "pattern": "^data:image/(webp|png|jpeg);base64,",
+      "title": "Thumbnail",
+      "type": "string"
+    }
+  },
+  "required": [
+    "dataset_version_id",
+    "dataset_name",
+    "image_id",
+    "width",
+    "height",
+    "num_objects",
+    "thumbnail"
+  ],
+  "title": "QuickTryImage",
+  "type": "object"
+}

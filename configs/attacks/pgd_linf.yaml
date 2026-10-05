@@ -1,0 +1,43 @@
+# Attack spec khai bằng YAML (docs/mo-rong-bang-config.md).
+# id và spec_sha256 tự tính; đổi bất kỳ trường nào ngoài `display` phải tăng `version`.
+schema_version: 1
+name: pgd_linf
+version: 1
+kind: attack
+access: white_box
+art_class: ProjectedGradientDescent
+primary_param:
+  name: eps
+  type: continuous
+  min: 0.0
+  max: 32.0
+  values: null
+  unit: 1/255
+fixed_params:
+  norm: inf
+  max_iter: 10
+  eps_step_ratio: 0.25
+  num_random_init: 0
+cost_model:
+  passes_per_image: 10
+  cpu_only: false
+requires_gradients: true
+display:
+  title_vi: PGD L∞ (10 bước)
+  title_en: PGD L∞ (10 steps)
+  description_vi: Tấn công white-box lặp 10 bước, bước eps/4, chiếu về hình cầu L∞.
+    Mạnh hơn FGSM ở cùng eps, chậm hơn khoảng 10 lần. Level là eps theo đơn vị 1/255.
+  description_en: Iterative white-box attack, 10 steps of eps/4, projected onto the
+    L∞ ball. Stronger than FGSM at the same eps, about 10x slower. Level is eps in
+    units of 1/255.
+  default_levels:
+  - 2.0
+  - 4.0
+  - 8.0
+  - 16.0
+  recommended_levels:
+  - 1.0
+  - 2.0
+  - 4.0
+  - 8.0
+  quick_try_level: 4.0

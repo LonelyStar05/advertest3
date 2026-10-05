@@ -1,0 +1,13 @@
+# Dataset khai bằng YAML (docs/mo-rong-bang-config.md). Đăng ký: advertest-admin import-config configs/
+# Đường dẫn tương đối tính theo thư mục của file này.
+name: kitti-training        # tên dataset trong DB khi tạo mới (version mới gắn vào dataset cùng tên)
+format: kitti               # hiện hỗ trợ: kitti (image_2/*.png, label_2/*.txt)
+root: ../../data/kitti-fixture
+split: training
+slices:                     # mỗi mục một slice cố định (chỉ ảnh của slice được upload lên MinIO)
+  - size: 5
+    seed: 42
+    preset: kitti-coco      # bộ lọc class và độ khó (ml_core/data/mapping.py PRESETS)
+mappings:                   # class mapping dataset → model
+  - model: yolov8n-coco     # tên model trong configs/models, hoặc id model đã đăng ký
+    preset: kitti-coco

@@ -1,0 +1,9 @@
+{
+  "dataset_version_id": "6df1963b-f6d2-5b41-b98d-fd1527a7c91a",
+  "dataset_name": "kitti-training",
+  "image_id": "000902",
+  "width": 1242,
+  "height": 375,
+  "num_objects": 9,
+  "thumbnail": "data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoEAAIAAUAmJaQAA3AA/twQAAA="
+}

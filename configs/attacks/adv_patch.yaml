@@ -1,0 +1,50 @@
+# Attack spec khai bằng YAML (docs/mo-rong-bang-config.md).
+# id và spec_sha256 tự tính; đổi bất kỳ trường nào ngoài `display` phải tăng `version`.
+schema_version: 1
+name: adv_patch
+version: 2
+kind: attack
+access: white_box
+art_class: RobustDPatch
+primary_param:
+  name: area_ratio
+  type: continuous
+  min: 0.02
+  max: 0.25
+  values: null
+  unit: ratio
+fixed_params:
+  shape: square
+  placement: image_region_center
+  brightness_range:
+  - 0.8
+  - 1.2
+cost_model:
+  passes_per_image: null
+  cpu_only: true
+requires_gradients: true
+requires_training: true
+training:
+  max_iter: 200
+  learning_rate: 0.02
+  sample_size: 1
+  checkpoint_every: 50
+  max_training_images: 50
+  batch_size: 8
+display:
+  title_vi: Miếng dán đối kháng
+  title_en: Adversarial patch
+  description_vi: Patch vuông train bằng RobustDPatch trên slice huấn luyện (không
+    giao slice đánh giá), rồi dán ở giữa vùng ảnh. Level là tỉ lệ diện tích patch
+    so với vùng ảnh. Cần train trước nên không có ở Thử nhanh.
+  description_en: Square patch trained with RobustDPatch on a training slice disjoint
+    from the evaluation slice, pasted at the image-region centre. Level is the patch
+    area ratio. Requires training, so not available in Quick try.
+  default_levels:
+  - 0.05
+  - 0.1
+  recommended_levels:
+  - 0.02
+  - 0.05
+  - 0.1
+  - 0.2

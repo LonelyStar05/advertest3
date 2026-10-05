@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 
 import type { NextStepView, Tone } from './next-step'
 import { lockedBannerText } from './review-labels'
+import { decisionOf, EXPLAIN_STATUSES } from '@/features/flow/approval'
+import { ApprovalExplainer } from '@/features/flow/ApprovalExplainer'
 
 const TONE: Record<Tone, string> = {
   info: 'border-detect/40 bg-detect/[0.06]',
@@ -53,6 +55,7 @@ export function NextStepPanel({
       {view && (
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-1">
+            <p className="text-[12.5px] font-semibold text-muted-foreground">Bước tiếp theo</p>
             <p className="text-[17px] font-semibold">{view.title}</p>
             <p className="max-w-[68ch] text-[15px] leading-6 text-muted-foreground">{view.body}</p>
           </div>
@@ -73,6 +76,9 @@ export function NextStepPanel({
             {extra}
           </div>
         </div>
+      )}
+      {EXPLAIN_STATUSES.includes(experiment.status) && (
+        <ApprovalExplainer decided={decisionOf(experiment.status)} />
       )}
     </div>
   )

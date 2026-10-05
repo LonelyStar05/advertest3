@@ -1,0 +1,45 @@
+# Attack spec khai bằng YAML (docs/mo-rong-bang-config.md).
+# id và spec_sha256 tự tính; đổi bất kỳ trường nào ngoài `display` phải tăng `version`.
+schema_version: 1
+name: fog
+version: 1
+kind: corruption
+access: not_applicable
+art_class: null
+primary_param:
+  name: severity
+  type: discrete
+  min: 1.0
+  max: 5.0
+  values:
+  - 1.0
+  - 2.0
+  - 3.0
+  - 4.0
+  - 5.0
+  unit: severity
+fixed_params:
+  corruption: fog
+  applied_to: image_region
+cost_model:
+  passes_per_image: null
+  cpu_only: true
+requires_gradients: false
+display:
+  title_vi: Sương mù
+  title_en: Fog
+  description_vi: 'Biến đổi tự nhiên: phủ sương mù lên vùng ảnh thật. Không cần gradient,
+    chạy trên CPU. Level là mức độ 1 đến 5.'
+  description_en: 'Natural corruption: fog over the real image region. No gradients,
+    CPU only. Level is severity 1 to 5.'
+  default_levels:
+  - 1.0
+  - 3.0
+  - 5.0
+  recommended_levels:
+  - 1.0
+  - 2.0
+  - 3.0
+  - 4.0
+  - 5.0
+  quick_try_level: 3.0

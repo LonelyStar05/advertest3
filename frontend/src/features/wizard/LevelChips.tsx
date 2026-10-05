@@ -139,6 +139,28 @@ export function LevelChips({
           </span>
         ))}
       </div>
+      {preset.some((v) => !levels.includes(v)) && (
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Level gợi ý">
+          <span className="text-sm text-muted-foreground">Thêm nhanh:</span>
+          {preset
+            .filter((v) => !levels.includes(v) && levels.length < 12)
+            .map((v) => (
+              <Button
+                key={v}
+                type="button"
+                variant="outline"
+                className="min-w-11 rounded-full tabular-nums"
+                aria-label={`Thêm level ${v}`}
+                onClick={() => {
+                  onChange(addLevel(levels, v))
+                  report(null)
+                }}
+              >
+                + {v}
+              </Button>
+            ))}
+        </div>
+      )}
       <label htmlFor={id} className="text-sm font-medium">
         Thêm level ({param.name}, {rangeText(param)})
       </label>

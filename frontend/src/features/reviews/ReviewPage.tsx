@@ -24,6 +24,8 @@ import { ReviewTab } from '@/features/experiments/ReviewTab'
 import { ResultsTab, RunsTable } from '@/features/experiments/tabs'
 import { useProtocol } from '@/features/wizard/api'
 import { COMPLIANCE_LABEL } from '@/features/wizard/protocol'
+import { decisionOf } from '@/features/flow/approval'
+import { ApprovalExplainer, ModelVerdictHelp } from '@/features/flow/ApprovalExplainer'
 
 import { useClaim, useDecide, useRelease } from './api'
 import {
@@ -252,6 +254,7 @@ export function DecisionPanel({
         <p className="text-xs text-muted-foreground">
           Chấp nhận là chấp nhận bài test; kết luận về model có thể là không đạt.
         </p>
+        <ModelVerdictHelp selected={form.modelVerdict} />
       </div>
       {hasInconclusive(review) &&
         field(
@@ -263,6 +266,7 @@ export function DecisionPanel({
           'Vì sao chấp nhận dù tiêu chí chưa kết luận được, ví dụ: thiếu dữ liệu ban đêm.',
         )}
       {decide.isError && <FormAlert>{errorMessage(decide.error)}</FormAlert>}
+      <ApprovalExplainer />
       <div className="flex flex-col gap-2 md:flex-row">
         <Button disabled={blockers.length > 0} onClick={() => setConfirm('approve')}>
           Chấp nhận
@@ -406,10 +410,12 @@ export function ReviewPage() {
           <Section title="Gửi duyệt, quyết định và bình luận">
             <ReviewTab experiment={e} runs={runList} />
           </Section>
-          {mine && (
+          {mine ? (
             <Section title="Quyết định">
               <DecisionPanel experiment={e} review={review} />
             </Section>
+          ) : (
+            <ApprovalExplainer decided={decisionOf(e.status)} />
           )}
         </>
       )}

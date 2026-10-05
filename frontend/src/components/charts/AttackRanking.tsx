@@ -129,13 +129,21 @@ function RankingCards({ ranking }: { ranking: AttackRankingEntry[] }) {
  * Xếp hạng attack (requirements.md Phase 6, Frontend: tab Kết quả): thứ tự của backend (giảm dần
  * theo `auc_drop`, không đủ dữ liệu xếp cuối).
  */
-export function AttackRanking({ ranking }: { ranking: AttackRankingEntry[] }) {
+export function AttackRanking({
+  ranking,
+  caption,
+}: {
+  ranking: AttackRankingEntry[]
+  /** Một câu hướng dẫn cách đọc, hiện trước phần giải thích kỹ thuật. */
+  caption?: string
+}) {
   if (ranking.length === 0) return null
   return (
     <section className="space-y-3" aria-labelledby="xep-hang-attack">
       <h3 id="xep-hang-attack" className="font-semibold">
         Xếp hạng attack
       </h3>
+      {caption && <p className="text-sm">{caption}</p>}
       <p className="text-sm text-muted-foreground">
         auc_drop: diện tích dưới đường mức sụt mAP@0.5 theo level chuẩn hóa (level / giá trị lớn
         nhất của tham số), tính đến độ phủ, không ngoại suy. Level bỏ qua do dừng sớm lấy mức sụt

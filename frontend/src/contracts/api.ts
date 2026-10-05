@@ -353,7 +353,7 @@ export interface paths {
         };
         /**
          * List Attack Specs
-         * @description Chỉ spec đang hoạt động.
+         * @description Chỉ spec đang hoạt động; `display` (tên, mô tả, level gợi ý) null khi chưa khai.
          */
         get: operations["list_attack_specs_attack_specs_get"];
         put?: never;
@@ -376,6 +376,48 @@ export interface paths {
          * @description Mọi spec, mọi version, kể cả spec đã tắt (Phase 6, trang `/admin/attacks`).
          */
         get: operations["list_attack_specs_admin_admin_attack_specs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quick-try": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Quick Try
+         * @description Chạy model trên một ảnh sạch và ảnh sau biến đổi ngay trong tiến trình API (CPU, vài giây;
+         *     các lượt chạy xếp hàng). Không tạo experiment, không lưu gì; không phải kết quả chính thức.
+         *     Box theo tọa độ ảnh gốc; ảnh trả dạng data URL WebP, đã làm mờ khi dataset chưa ẩn danh.
+         */
+        post: operations["run_quick_try_quick_try_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quick-try/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Quick Try Images
+         * @description Ảnh mẫu chọn được (ảnh thuộc slice đã đăng ký), kèm thumbnail WebP đã làm mờ.
+         */
+        get: operations["list_quick_try_images_quick_try_images_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1510,8 +1552,97 @@ export interface components {
              * @description Hash của mọi trường trừ id và chính nó
              */
             spec_sha256: string;
+            display?: components["schemas"]["AttackSpecDisplay"] | null;
             /** Is Active */
             is_active: boolean;
+        };
+        /**
+         * AttackSpecDisplay
+         * @description Thông tin hiển thị của attack spec (bổ sung 2026-10, docs/mo-rong-bang-config.md).
+         *
+         *     Không thuộc phần thân nên không vào `spec_sha256`: sửa mô tả hay level gợi ý không làm đổi
+         *     kết quả, nên không cần tăng `version`. Level theo đơn vị `primary_param.unit` của spec.
+         */
+        AttackSpecDisplay: {
+            /**
+             * Title Vi
+             * @description Tên hiển thị tiếng Việt
+             */
+            title_vi?: string | null;
+            /**
+             * Title En
+             * @description Tên hiển thị tiếng Anh
+             */
+            title_en?: string | null;
+            /** Description Vi */
+            description_vi?: string | null;
+            /** Description En */
+            description_en?: string | null;
+            /**
+             * Default Levels
+             * @description Level điền sẵn khi chọn attack ở wizard
+             */
+            default_levels?: number[];
+            /**
+             * Recommended Levels
+             * @description Level gợi ý (chip) cho người dùng chọn nhanh
+             */
+            recommended_levels?: number[];
+            /**
+             * Quick Try Level
+             * @description Level mặc định ở trang Thử nhanh
+             */
+            quick_try_level?: number | null;
+        };
+        /**
+         * AttackSpecView
+         * @description `GET /attack-specs`: spec kèm thông tin hiển thị; `display = null` khi chưa khai.
+         */
+        AttackSpecView: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Name */
+            name: string;
+            /** Version */
+            version: number;
+            kind: components["schemas"]["AttackKind"];
+            /** @description Corruption và occlusion dùng not_applicable; attack không dùng giá trị này */
+            access: components["schemas"]["AttackAccess"];
+            /**
+             * Art Class
+             * @description Null với corruption và occlusion
+             */
+            art_class?: string | null;
+            primary_param: components["schemas"]["PrimaryParam"];
+            /** Fixed Params */
+            fixed_params: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            cost_model: components["schemas"]["CostModel"];
+            /** Requires Gradients */
+            requires_gradients: boolean;
+            /**
+             * Requires Training
+             * @description Phase 6: phải train (patch) trên slice huấn luyện trước khi đánh giá
+             */
+            requires_training?: boolean;
+            /** @description Có khi và chỉ khi requires_training = true */
+            training?: components["schemas"]["TrainingParams"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Spec Sha256
+             * @description Hash của mọi trường trừ id và chính nó
+             */
+            spec_sha256: string;
+            display?: components["schemas"]["AttackSpecDisplay"] | null;
         };
         /** AuditActor */
         AuditActor: {
@@ -3384,6 +3515,203 @@ export interface components {
              */
             ahead_seconds: number;
         };
+        /**
+         * QuickTryBox
+         * @description Một phát hiện có score >= operating_conf; bbox xyxy pixel của **ảnh gốc**.
+         */
+        QuickTryBox: {
+            /** Bbox */
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /**
+             * Class Name
+             * @description Class của model
+             */
+            class_name: string;
+            /** Score */
+            score: number;
+            /**
+             * Matched
+             * @description Ảnh sạch: còn được phát hiện sau biến đổi (IoU >= 0.5, cùng class). Ảnh sau biến đổi: khớp một phát hiện của ảnh sạch (false là phát hiện mới)
+             */
+            matched: boolean;
+        };
+        /**
+         * QuickTryImage
+         * @description Một ảnh mẫu chọn được ở Thử nhanh (`GET /quick-try/images`).
+         */
+        QuickTryImage: {
+            /**
+             * Dataset Version Id
+             * Format: uuid
+             */
+            dataset_version_id: string;
+            /** Dataset Name */
+            dataset_name: string;
+            /** Image Id */
+            image_id: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /**
+             * Num Objects
+             * @description Số annotation của ảnh trong manifest
+             */
+            num_objects: number;
+            /**
+             * Thumbnail
+             * @description WebP rộng 320 px, đã làm mờ khi dataset chưa ẩn danh
+             */
+            thumbnail: string;
+        };
+        /**
+         * QuickTryRequest
+         * @description `POST /quick-try`. Ảnh: hoặc `dataset_version_id` + `image_id` (ảnh có trong slice đã đăng
+         *     ký, xem `GET /quick-try/images`), hoặc `image_base64` (PNG/JPEG tải lên). Attack: đúng một
+         *     trong `attack_spec_id` hoặc `attack_name` (version đang hoạt động cao nhất).
+         */
+        QuickTryRequest: {
+            /**
+             * Model Version Id
+             * Format: uuid
+             */
+            model_version_id: string;
+            /** Attack Spec Id */
+            attack_spec_id?: string | null;
+            /** Attack Name */
+            attack_name?: string | null;
+            /**
+             * Level
+             * @description Theo đơn vị primary_param.unit của spec, trong [min, max]
+             */
+            level: number;
+            /**
+             * Seed
+             * @default 0
+             */
+            seed: number;
+            /** Dataset Version Id */
+            dataset_version_id?: string | null;
+            /** Image Id */
+            image_id?: string | null;
+            /**
+             * Image Base64
+             * @description PNG hoặc JPEG, base64 thuần hoặc data URL (data:image/...;base64,...)
+             */
+            image_base64?: string | null;
+        };
+        /**
+         * QuickTryResult
+         * @description Kết quả Thử nhanh. Ảnh trả dạng data URL WebP đúng kích thước ảnh gốc (`width` x
+         *     `height`), cùng hệ tọa độ với `bbox`; ảnh sau biến đổi được tạo ở không gian letterbox 640 rồi
+         *     phóng về kích thước gốc để hiển thị.
+         */
+        QuickTryResult: {
+            /**
+             * Model Version Id
+             * Format: uuid
+             */
+            model_version_id: string;
+            /** Model Name */
+            model_name: string;
+            /**
+             * Attack Spec Id
+             * Format: uuid
+             */
+            attack_spec_id: string;
+            /** Attack Name */
+            attack_name: string;
+            /** Attack Version */
+            attack_version: number;
+            /** Level */
+            level: number;
+            /** Unit */
+            unit: string;
+            /** Seed */
+            seed: number;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "dataset" | "upload";
+            /** Dataset Version Id */
+            dataset_version_id: string | null;
+            /** Image Id */
+            image_id: string | null;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Clean Image */
+            clean_image: string;
+            /** Attacked Image */
+            attacked_image: string;
+            /**
+             * Perturbation Image
+             * @description Nhiễu khuếch đại (FGSM, PGD) hoặc vùng khác biệt (corruption, occlusion); ở độ phân giải đầu vào của model (vùng ảnh thật của letterbox 640), không phải width x height
+             */
+            perturbation_image: string;
+            /** Clean */
+            clean: components["schemas"]["QuickTryBox"][];
+            /** Attacked */
+            attacked: components["schemas"]["QuickTryBox"][];
+            summary: components["schemas"]["QuickTrySummary"];
+            /** Operating Conf */
+            operating_conf: number;
+            /**
+             * Labels Source
+             * @description Nhãn đưa cho attack: ground truth qua class mapping, hoặc phát hiện trên ảnh sạch khi không có mapping (ảnh tải lên)
+             * @enum {string}
+             */
+            labels_source: "ground_truth" | "clean_predictions";
+            /** @description Làm mờ rule_v1 trên cả ba ảnh; null khi dataset đã ẩn danh */
+            anonymization: components["schemas"]["CaseAnonymization"] | null;
+            timing: components["schemas"]["QuickTryTiming"];
+        };
+        /** QuickTrySummary */
+        QuickTrySummary: {
+            /** Clean Count */
+            clean_count: number;
+            /** Attacked Count */
+            attacked_count: number;
+            /**
+             * Missed Count
+             * @description Phát hiện sạch bị mất sau biến đổi
+             */
+            missed_count: number;
+            /**
+             * New Count
+             * @description Phát hiện mới sau biến đổi (false positive mới)
+             */
+            new_count: number;
+            /**
+             * Iou Threshold
+             * @default 0.5
+             */
+            iou_threshold: number;
+        };
+        /**
+         * QuickTryTiming
+         * @description Thời gian (ms) trong tiến trình API; `load_ms` gồm nạp model khi chưa có trong cache.
+         */
+        QuickTryTiming: {
+            /** Load Ms */
+            load_ms: number;
+            /** Clean Ms */
+            clean_ms: number;
+            /**
+             * Attack Ms
+             * @description Tạo ảnh biến đổi và predict trên nó
+             */
+            attack_ms: number;
+            /** Total Ms */
+            total_ms: number;
+        };
         /** RejectRequest */
         RejectRequest: {
             /** Reason */
@@ -5089,6 +5417,8 @@ export type AttackRankingEntry = components['schemas']['AttackRankingEntry'];
 export type AttackSpec = components['schemas']['AttackSpec'];
 export type AttackSpecAdminPage = components['schemas']['AttackSpecAdminPage'];
 export type AttackSpecAdminView = components['schemas']['AttackSpecAdminView'];
+export type AttackSpecDisplay = components['schemas']['AttackSpecDisplay'];
+export type AttackSpecView = components['schemas']['AttackSpecView'];
 export type AuditActor = components['schemas']['AuditActor'];
 export type AuditLogEntry = components['schemas']['AuditLogEntry'];
 export type AuditLogPage = components['schemas']['AuditLogPage'];
@@ -5188,6 +5518,12 @@ export type ProtocolSummary = components['schemas']['ProtocolSummary'];
 export type ProtocolVersionCreate = components['schemas']['ProtocolVersionCreate'];
 export type ProtocolView = components['schemas']['ProtocolView'];
 export type QueueEstimate = components['schemas']['QueueEstimate'];
+export type QuickTryBox = components['schemas']['QuickTryBox'];
+export type QuickTryImage = components['schemas']['QuickTryImage'];
+export type QuickTryRequest = components['schemas']['QuickTryRequest'];
+export type QuickTryResult = components['schemas']['QuickTryResult'];
+export type QuickTrySummary = components['schemas']['QuickTrySummary'];
+export type QuickTryTiming = components['schemas']['QuickTryTiming'];
 export type RejectRequest = components['schemas']['RejectRequest'];
 export type ReportAttackSpec = components['schemas']['ReportAttackSpec'];
 export type ReportCase = components['schemas']['ReportCase'];
@@ -6411,7 +6747,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AttackSpec"][];
+                    "application/json": components["schemas"]["AttackSpecView"][];
                 };
             };
             /** @description Thiếu phiên hợp lệ */
@@ -6472,6 +6808,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AttackSpecAdminPage"];
+                };
+            };
+            /** @description Thiếu phiên hợp lệ */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Thiếu permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description validation_error (sai schema) hoặc invalid_request (sai nghiệp vụ) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chưa cài đặt */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    run_quick_try_quick_try_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickTryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickTryResult"];
+                };
+            };
+            /** @description Thiếu phiên hợp lệ */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Thiếu permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Không tồn tại */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description validation_error (sai schema) hoặc invalid_request (sai nghiệp vụ) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Chưa cài đặt */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_quick_try_images_quick_try_images_get: {
+        parameters: {
+            query?: {
+                dataset_version?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickTryImage"][];
                 };
             };
             /** @description Thiếu phiên hợp lệ */

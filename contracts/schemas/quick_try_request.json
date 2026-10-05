@@ -1,0 +1,95 @@
+{
+  "additionalProperties": false,
+  "description": "`POST /quick-try`. Ảnh: hoặc `dataset_version_id` + `image_id` (ảnh có trong slice đã đăng\nký, xem `GET /quick-try/images`), hoặc `image_base64` (PNG/JPEG tải lên). Attack: đúng một\ntrong `attack_spec_id` hoặc `attack_name` (version đang hoạt động cao nhất).",
+  "properties": {
+    "model_version_id": {
+      "format": "uuid",
+      "title": "Model Version Id",
+      "type": "string"
+    },
+    "attack_spec_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Attack Spec Id"
+    },
+    "attack_name": {
+      "anyOf": [
+        {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Attack Name"
+    },
+    "level": {
+      "description": "Theo đơn vị primary_param.unit của spec, trong [min, max]",
+      "title": "Level",
+      "type": "number"
+    },
+    "seed": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "dataset_version_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Dataset Version Id"
+    },
+    "image_id": {
+      "anyOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Image Id"
+    },
+    "image_base64": {
+      "anyOf": [
+        {
+          "maxLength": 8000000,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "PNG hoặc JPEG, base64 thuần hoặc data URL (data:image/...;base64,...)",
+      "title": "Image Base64"
+    }
+  },
+  "required": [
+    "model_version_id",
+    "level"
+  ],
+  "title": "QuickTryRequest",
+  "type": "object"
+}

@@ -1,0 +1,340 @@
+{
+  "$defs": {
+    "CaseAnonymization": {
+      "additionalProperties": false,
+      "description": "Làm mờ mặt người và biển số trên ảnh hiển thị của failure case (Phase 6).",
+      "properties": {
+        "applied": {
+          "title": "Applied",
+          "type": "boolean"
+        },
+        "method": {
+          "examples": [
+            "rule_v1"
+          ],
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "title": "Method",
+          "type": "string"
+        },
+        "version": {
+          "description": "Version cài đặt của method",
+          "exclusiveMinimum": 0,
+          "title": "Version",
+          "type": "integer"
+        },
+        "regions_count": {
+          "description": "Số vùng đã làm mờ trên ảnh",
+          "minimum": 0,
+          "title": "Regions Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "applied",
+        "method",
+        "version",
+        "regions_count"
+      ],
+      "title": "CaseAnonymization",
+      "type": "object"
+    },
+    "QuickTryBox": {
+      "additionalProperties": false,
+      "description": "Một phát hiện có score >= operating_conf; bbox xyxy pixel của **ảnh gốc**.",
+      "properties": {
+        "bbox": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bbox",
+          "type": "array"
+        },
+        "class_name": {
+          "description": "Class của model",
+          "minLength": 1,
+          "title": "Class Name",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "matched": {
+          "description": "Ảnh sạch: còn được phát hiện sau biến đổi (IoU >= 0.5, cùng class). Ảnh sau biến đổi: khớp một phát hiện của ảnh sạch (false là phát hiện mới)",
+          "title": "Matched",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "bbox",
+        "class_name",
+        "score",
+        "matched"
+      ],
+      "title": "QuickTryBox",
+      "type": "object"
+    },
+    "QuickTrySummary": {
+      "additionalProperties": false,
+      "properties": {
+        "clean_count": {
+          "minimum": 0,
+          "title": "Clean Count",
+          "type": "integer"
+        },
+        "attacked_count": {
+          "minimum": 0,
+          "title": "Attacked Count",
+          "type": "integer"
+        },
+        "missed_count": {
+          "description": "Phát hiện sạch bị mất sau biến đổi",
+          "minimum": 0,
+          "title": "Missed Count",
+          "type": "integer"
+        },
+        "new_count": {
+          "description": "Phát hiện mới sau biến đổi (false positive mới)",
+          "minimum": 0,
+          "title": "New Count",
+          "type": "integer"
+        },
+        "iou_threshold": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Iou Threshold",
+          "type": "number"
+        }
+      },
+      "required": [
+        "clean_count",
+        "attacked_count",
+        "missed_count",
+        "new_count"
+      ],
+      "title": "QuickTrySummary",
+      "type": "object"
+    },
+    "QuickTryTiming": {
+      "additionalProperties": false,
+      "description": "Thời gian (ms) trong tiến trình API; `load_ms` gồm nạp model khi chưa có trong cache.",
+      "properties": {
+        "load_ms": {
+          "minimum": 0,
+          "title": "Load Ms",
+          "type": "number"
+        },
+        "clean_ms": {
+          "minimum": 0,
+          "title": "Clean Ms",
+          "type": "number"
+        },
+        "attack_ms": {
+          "description": "Tạo ảnh biến đổi và predict trên nó",
+          "minimum": 0,
+          "title": "Attack Ms",
+          "type": "number"
+        },
+        "total_ms": {
+          "minimum": 0,
+          "title": "Total Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "load_ms",
+        "clean_ms",
+        "attack_ms",
+        "total_ms"
+      ],
+      "title": "QuickTryTiming",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Kết quả Thử nhanh. Ảnh trả dạng data URL WebP đúng kích thước ảnh gốc (`width` x\n`height`), cùng hệ tọa độ với `bbox`; ảnh sau biến đổi được tạo ở không gian letterbox 640 rồi\nphóng về kích thước gốc để hiển thị.",
+  "properties": {
+    "model_version_id": {
+      "format": "uuid",
+      "title": "Model Version Id",
+      "type": "string"
+    },
+    "model_name": {
+      "title": "Model Name",
+      "type": "string"
+    },
+    "attack_spec_id": {
+      "format": "uuid",
+      "title": "Attack Spec Id",
+      "type": "string"
+    },
+    "attack_name": {
+      "title": "Attack Name",
+      "type": "string"
+    },
+    "attack_version": {
+      "exclusiveMinimum": 0,
+      "title": "Attack Version",
+      "type": "integer"
+    },
+    "level": {
+      "title": "Level",
+      "type": "number"
+    },
+    "unit": {
+      "title": "Unit",
+      "type": "string"
+    },
+    "seed": {
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "source": {
+      "enum": [
+        "dataset",
+        "upload"
+      ],
+      "title": "Source",
+      "type": "string"
+    },
+    "dataset_version_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Dataset Version Id"
+    },
+    "image_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Image Id"
+    },
+    "width": {
+      "exclusiveMinimum": 0,
+      "title": "Width",
+      "type": "integer"
+    },
+    "height": {
+      "exclusiveMinimum": 0,
+      "title": "Height",
+      "type": "integer"
+    },
+    "clean_image": {
+      "pattern": "^data:image/(webp|png|jpeg);base64,",
+      "title": "Clean Image",
+      "type": "string"
+    },
+    "attacked_image": {
+      "pattern": "^data:image/(webp|png|jpeg);base64,",
+      "title": "Attacked Image",
+      "type": "string"
+    },
+    "perturbation_image": {
+      "description": "Nhiễu khuếch đại (FGSM, PGD) hoặc vùng khác biệt (corruption, occlusion); ở độ phân giải đầu vào của model (vùng ảnh thật của letterbox 640), không phải width x height",
+      "pattern": "^data:image/(webp|png|jpeg);base64,",
+      "title": "Perturbation Image",
+      "type": "string"
+    },
+    "clean": {
+      "items": {
+        "$ref": "#/$defs/QuickTryBox"
+      },
+      "title": "Clean",
+      "type": "array"
+    },
+    "attacked": {
+      "items": {
+        "$ref": "#/$defs/QuickTryBox"
+      },
+      "title": "Attacked",
+      "type": "array"
+    },
+    "summary": {
+      "$ref": "#/$defs/QuickTrySummary"
+    },
+    "operating_conf": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Operating Conf",
+      "type": "number"
+    },
+    "labels_source": {
+      "description": "Nhãn đưa cho attack: ground truth qua class mapping, hoặc phát hiện trên ảnh sạch khi không có mapping (ảnh tải lên)",
+      "enum": [
+        "ground_truth",
+        "clean_predictions"
+      ],
+      "title": "Labels Source",
+      "type": "string"
+    },
+    "anonymization": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CaseAnonymization"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Làm mờ rule_v1 trên cả ba ảnh; null khi dataset đã ẩn danh"
+    },
+    "timing": {
+      "$ref": "#/$defs/QuickTryTiming"
+    }
+  },
+  "required": [
+    "model_version_id",
+    "model_name",
+    "attack_spec_id",
+    "attack_name",
+    "attack_version",
+    "level",
+    "unit",
+    "seed",
+    "source",
+    "dataset_version_id",
+    "image_id",
+    "width",
+    "height",
+    "clean_image",
+    "attacked_image",
+    "perturbation_image",
+    "clean",
+    "attacked",
+    "summary",
+    "operating_conf",
+    "labels_source",
+    "anonymization",
+    "timing"
+  ],
+  "title": "QuickTryResult",
+  "type": "object"
+}

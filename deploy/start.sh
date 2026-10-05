@@ -67,6 +67,9 @@ say "Build và khởi động Postgres, MinIO, Mailpit, API, frontend"
 say "Nạp attack catalog, máy chạy local-dev và tài khoản admin"
 "${DC[@]}" exec -T -e ADVERTEST_ADMIN_EMAIL -e ADVERTEST_ADMIN_PASSWORD api python -m backend.admin_cli.seed
 
+say "Nạp mô tả attack (tên, giải thích, mức gợi ý) từ configs/attacks"
+"${DC[@]}" exec -T api advertest-admin catalog sync --dir configs/attacks --as "$ADVERTEST_ADMIN_EMAIL"
+
 say "Nạp model YOLOv8n, dataset và slice 5 ảnh"
 "${DC[@]}" exec -T api advertest-admin import-local --store /data/store --as "$ADVERTEST_ADMIN_EMAIL"
 

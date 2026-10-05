@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from uuid import UUID
 
@@ -97,13 +98,19 @@ def _model(
 
 
 def _dataset(
-    session: Session, local: ArtifactStore, buckets: storage.Buckets, actor: m.User, sha: str
+    session: Session,
+    local: ArtifactStore,
+    buckets: storage.Buckets,
+    actor: m.User,
+    sha: str,
+    name: str | None = None,
 ) -> DatasetManifest:
     manifest = load_manifest(local, sha)
     _upload(buckets.datasets, storage.manifest_key(sha), local.get(local_manifest_key(sha)))
     version_id = content_id(sha)
     if session.get(m.DatasetVersion, version_id) is None:
-        name = f"{manifest.source.format}-{manifest.source.split}"
+        # Tên khai trong configs/datasets (import-config), mặc định `<format>-<split>`.
+        name = name or f"{manifest.source.format}-{manifest.source.split}"
         dataset = session.scalar(select(m.Dataset).where(m.Dataset.name == name))
         if dataset is None:
             dataset = m.Dataset(name=name, created_by=actor.id)
@@ -210,9 +217,16 @@ def _slice(
 
 
 def import_local(
-    session: Session, local: ArtifactStore, buckets: storage.Buckets, *, actor: m.User
+    session: Session,
+    local: ArtifactStore,
+    buckets: storage.Buckets,
+    *,
+    actor: m.User,
+    dataset_names: Mapping[str, str] | None = None,
 ) -> ImportReport:
-    """Đăng ký mọi model, dataset, mapping, slice trong chỉ mục của `local`."""
+    """Đăng ký mọi model, dataset, mapping, slice trong chỉ mục của `local`. `dataset_names`
+    (dataset_version_sha256 → tên) đặt tên dataset khi tạo mới (`import-config`)."""
+    names = dataset_names or {}
     report = ImportReport()
     for id_, sha in _ids(local, "model"):
         card = _model(session, local, buckets, actor, sha)
@@ -220,7 +234,7 @@ def import_local(
             raise Invalid(f"Chỉ mục model {id_} trỏ tới card {card.id}")
         report.models.append(card.id)
     for id_, sha in _ids(local, "dataset"):
-        manifest = _dataset(session, local, buckets, actor, sha)
+        manifest = _dataset(session, local, buckets, actor, sha, names.get(sha))
         if sha256_of(manifest) != sha:
             raise Invalid(f"Manifest của dataset {id_} không khớp hash")
         report.datasets.append(id_)

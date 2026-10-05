@@ -1,0 +1,7 @@
+# Model khai bằng YAML (docs/mo-rong-bang-config.md). Đăng ký: advertest-admin import-config configs/
+# Đường dẫn tương đối tính theo thư mục của file này.
+name: yolov8n-coco          # tên model trong DB; weights đã đăng ký giữ tên của lần đầu
+weights: ../../tests/fixtures/yolov8n.pt
+framework: ultralytics      # hiện chỉ hỗ trợ ultralytics (YOLOv8/YOLO11 detection)
+class_names: from_weights   # tên class lấy từ checkpoint
+device: cpu                 # thiết bị chạy bài kiểm tra gradient lúc đăng ký

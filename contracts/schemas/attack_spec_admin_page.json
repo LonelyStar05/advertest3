@@ -102,6 +102,17 @@
           "title": "Spec Sha256",
           "type": "string"
         },
+        "display": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AttackSpecDisplay"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "is_active": {
           "title": "Is Active",
           "type": "boolean"
@@ -121,6 +132,97 @@
         "is_active"
       ],
       "title": "AttackSpecAdminView",
+      "type": "object"
+    },
+    "AttackSpecDisplay": {
+      "additionalProperties": false,
+      "description": "Thông tin hiển thị của attack spec (bổ sung 2026-10, docs/mo-rong-bang-config.md).\n\nKhông thuộc phần thân nên không vào `spec_sha256`: sửa mô tả hay level gợi ý không làm đổi\nkết quả, nên không cần tăng `version`. Level theo đơn vị `primary_param.unit` của spec.",
+      "properties": {
+        "title_vi": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Tên hiển thị tiếng Việt",
+          "title": "Title Vi"
+        },
+        "title_en": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Tên hiển thị tiếng Anh",
+          "title": "Title En"
+        },
+        "description_vi": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description Vi"
+        },
+        "description_en": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description En"
+        },
+        "default_levels": {
+          "description": "Level điền sẵn khi chọn attack ở wizard",
+          "items": {
+            "type": "number"
+          },
+          "title": "Default Levels",
+          "type": "array"
+        },
+        "recommended_levels": {
+          "description": "Level gợi ý (chip) cho người dùng chọn nhanh",
+          "items": {
+            "type": "number"
+          },
+          "title": "Recommended Levels",
+          "type": "array"
+        },
+        "quick_try_level": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Level mặc định ở trang Thử nhanh",
+          "title": "Quick Try Level"
+        }
+      },
+      "title": "AttackSpecDisplay",
       "type": "object"
     },
     "CostModel": {

@@ -38,8 +38,8 @@ from advertest_contracts.enums import (
 from advertest_contracts.models import (
     AccessRequest,
     ApproveRequest,
-    AttackSpec,
     AttackSpecAdminPage,
+    AttackSpecView,
     AuditLogPage,
     CaseVerdictInput,
     CaseVerdictView,
@@ -65,6 +65,9 @@ from advertest_contracts.models import (
     ProtocolSummary,
     ProtocolVersionCreate,
     ProtocolView,
+    QuickTryImage,
+    QuickTryRequest,
+    QuickTryResult,
     RejectRequest,
     ReportDetail,
     ReportDownload,
@@ -117,8 +120,10 @@ from backend.app.services import (
     experiment_config,
     experiment_views,
     experiments,
+    quick_try,
 )
 from backend.app.services.clock import Clock
+from backend.app.storage import Buckets
 from ml_core.store import KeyNotFoundError
 
 Sessions = Annotated[SessionFactory, Depends(get_sessionmaker)]
@@ -373,8 +378,8 @@ def list_class_mappings(
 
 
 @router.get("/attack-specs", tags=["attack-specs"], **guard(P.ATTACK_CATALOG_READ))
-def list_attack_specs(factory: Sessions) -> list[AttackSpec]:
-    """Chỉ spec đang hoạt động."""
+def list_attack_specs(factory: Sessions) -> list[AttackSpecView]:
+    """Chỉ spec đang hoạt động; `display` (tên, mô tả, level gợi ý) null khi chưa khai."""
     with transaction(factory) as session:
         return catalog.list_attack_specs(session)
 
@@ -386,6 +391,50 @@ def list_attack_specs_admin(
     """Mọi spec, mọi version, kể cả spec đã tắt (Phase 6, trang `/admin/attacks`)."""
     with transaction(factory) as session:
         return catalog.list_attack_specs_admin(session, cursor, limit)
+
+
+# ---------------------------------------------------------------- Thử nhanh (bổ sung 2026-10)
+
+
+def get_buckets() -> Buckets:
+    """Bucket MinIO (model, dataset) cho Thử nhanh; test thay bằng dependency_overrides."""
+    return get_storage().buckets
+
+
+QuickTryBuckets = Annotated[Buckets, Depends(get_buckets)]
+
+
+@router.post(
+    "/quick-try",
+    tags=["quick-try"],
+    responses=NOT_FOUND_RESPONSE,
+    **guard(P.MODEL_READ),
+)
+def run_quick_try(
+    body: QuickTryRequest, factory: Sessions, buckets: QuickTryBuckets
+) -> QuickTryResult:
+    """Chạy model trên một ảnh sạch và ảnh sau biến đổi ngay trong tiến trình API (CPU, vài giây;
+    các lượt chạy xếp hàng). Không tạo experiment, không lưu gì; không phải kết quả chính thức.
+    Box theo tọa độ ảnh gốc; ảnh trả dạng data URL WebP, đã làm mờ khi dataset chưa ẩn danh."""
+    with transaction(factory) as session:
+        prepared = quick_try.prepare(session, buckets, body)
+    return quick_try.execute(buckets, prepared)
+
+
+@router.get("/quick-try/images", tags=["quick-try"], **guard(P.DATASET_READ))
+def list_quick_try_images(
+    factory: Sessions,
+    buckets: QuickTryBuckets,
+    dataset_version: UUID | None = None,
+    limit: Annotated[
+        int, Query(ge=1, le=quick_try.MAX_IMAGE_LIMIT)
+    ] = quick_try.DEFAULT_IMAGE_LIMIT,
+) -> list[QuickTryImage]:
+    """Ảnh mẫu chọn được (ảnh thuộc slice đã đăng ký), kèm thumbnail WebP đã làm mờ."""
+    with transaction(factory) as session:
+        return quick_try.list_images(
+            session, buckets, dataset_version_id=dataset_version, limit=limit
+        )
 
 
 @router.get("/protocols", tags=["protocols"], **guard(P.PROTOCOL_READ))

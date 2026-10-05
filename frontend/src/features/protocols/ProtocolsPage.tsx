@@ -17,8 +17,9 @@ import { criterionText } from '@/features/reviews/decision'
 import { useAttackSpecs, useProtocol } from '@/features/wizard/api'
 
 import { useAllProtocols, useCreateProtocol, useNewVersion, useRetireProtocol } from './api'
-import { EMPTY_FORM, formOf } from './form'
+import { formOf } from './form'
 import { ProtocolEditor } from './ProtocolEditor'
+import { availableTemplates, defaultForm } from './templates'
 import { PageHero } from '@/layout/PageHero'
 import { ProtocolArt } from '@/layout/hero-art'
 import { Lock } from 'lucide-react'
@@ -83,11 +84,22 @@ export function ProtocolBodyView({ protocol }: { protocol: ProtocolView }) {
 
 type Editing = { mode: 'create' } | { mode: 'version'; summary: ProtocolSummary } | null
 
-function CreatePanel({ specs, onDone }: { specs: AttackSpec[]; onDone: () => void }) {
+function CreatePanel({
+  specs,
+  loading,
+  onDone,
+}: {
+  specs: AttackSpec[]
+  loading: boolean
+  onDone: () => void
+}) {
   const create = useCreateProtocol()
+  // Form điền sẵn theo mẫu đầu tiên dùng được: cần catalog trước khi dựng form.
+  if (loading) return <p className="text-sm text-muted-foreground">Đang tải attack catalog…</p>
   return (
     <ProtocolEditor
-      initial={EMPTY_FORM}
+      initial={defaultForm(specs)}
+      initialTemplate={availableTemplates(specs)[0]?.id ?? null}
       specs={specs}
       pending={create.isPending}
       error={create.error}
@@ -236,7 +248,11 @@ export function ProtocolsPage() {
           </h2>
           {specs.isError && <FormAlert>Không tải được attack catalog.</FormAlert>}
           {editing.mode === 'create' ? (
-            <CreatePanel specs={catalog} onDone={() => setEditing(null)} />
+            <CreatePanel
+              specs={catalog}
+              loading={specs.isPending}
+              onDone={() => setEditing(null)}
+            />
           ) : (
             <VersionPanel
               summary={editing.summary}

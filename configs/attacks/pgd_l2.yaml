@@ -1,0 +1,43 @@
+# Attack spec khai bằng YAML (docs/mo-rong-bang-config.md).
+# id và spec_sha256 tự tính; đổi bất kỳ trường nào ngoài `display` phải tăng `version`.
+schema_version: 1
+name: pgd_l2
+version: 1
+kind: attack
+access: white_box
+art_class: ProjectedGradientDescent
+primary_param:
+  name: eps
+  type: continuous
+  min: 0.0
+  max: 16.0
+  values: null
+  unit: L2
+fixed_params:
+  norm: 2
+  max_iter: 10
+  eps_step_ratio: 0.25
+  num_random_init: 0
+cost_model:
+  passes_per_image: 10
+  cpu_only: false
+requires_gradients: true
+display:
+  title_vi: PGD L2 (10 bước)
+  title_en: PGD L2 (10 steps)
+  description_vi: PGD 10 bước với ràng buộc chuẩn L2 trên toàn ảnh (thang [0, 1]).
+    Nhiễu tập trung ở ít điểm ảnh hơn L∞. Level là eps L2.
+  description_en: 10-step PGD constrained in L2 norm over the whole image ([0, 1]
+    scale). Perturbation concentrates on fewer pixels than L∞. Level is the L2 eps.
+  default_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  - 4.0
+  recommended_levels:
+  - 0.5
+  - 1.0
+  - 2.0
+  - 4.0
+  - 8.0
+  quick_try_level: 2.0

@@ -35,6 +35,8 @@ COPY contracts ./contracts
 COPY ml_core ./ml_core
 COPY attacks ./attacks
 COPY backend ./backend
+# Mô tả attack, model, dataset khai báo bằng YAML (advertest-admin catalog sync / import-config).
+COPY configs ./configs
 RUN uv sync --frozen --no-dev --extra "$TORCH"
 
 COPY docker/api/entrypoint.sh /usr/local/bin/entrypoint.sh

@@ -42,21 +42,26 @@ class IncompatibleAttack(ValueError):
     """Spec cần gradient nhưng estimator không cung cấp."""
 
 
+def check_art_spec(spec: AttackSpec) -> None:
+    """Báo `UnsupportedAttack` nếu adapter ART không dựng được spec (không cần estimator)."""
+    if spec.kind != AttackKind.ATTACK or spec.art_class is None:
+        raise UnsupportedAttack(f"{spec.name}: adapter ART chỉ nhận kind = attack")
+    if spec.art_class not in _ART_CLASSES:
+        raise UnsupportedAttack(
+            f"{spec.name}: art_class {spec.art_class!r} chưa được hỗ trợ "
+            f"(có: {', '.join(sorted(_ART_CLASSES))})"
+        )
+    if spec.primary_param.name != "eps" or spec.primary_param.unit not in _UNIT_SCALE:
+        raise UnsupportedAttack(
+            f"{spec.name}: tham số chính phải là eps với đơn vị trong {sorted(_UNIT_SCALE)}"
+        )
+
+
 class ArtPerturbation:
     """Attack white-box của ART theo interface `Perturbation`."""
 
     def __init__(self, spec: AttackSpec, estimator: BaseEstimator) -> None:
-        if spec.kind != AttackKind.ATTACK or spec.art_class is None:
-            raise UnsupportedAttack(f"{spec.name}: adapter ART chỉ nhận kind = attack")
-        if spec.art_class not in _ART_CLASSES:
-            raise UnsupportedAttack(
-                f"{spec.name}: art_class {spec.art_class!r} chưa được hỗ trợ "
-                f"(có: {', '.join(sorted(_ART_CLASSES))})"
-            )
-        if spec.primary_param.name != "eps" or spec.primary_param.unit not in _UNIT_SCALE:
-            raise UnsupportedAttack(
-                f"{spec.name}: tham số chính phải là eps với đơn vị trong {sorted(_UNIT_SCALE)}"
-            )
+        check_art_spec(spec)
         self.spec = spec
         self.estimator = estimator
 

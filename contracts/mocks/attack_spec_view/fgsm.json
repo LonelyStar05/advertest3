@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "name": "fgsm",
+  "version": 1,
+  "kind": "attack",
+  "access": "white_box",
+  "art_class": "FastGradientMethod",
+  "primary_param": {
+    "name": "eps",
+    "type": "continuous",
+    "min": 0.0,
+    "max": 32.0,
+    "values": null,
+    "unit": "1/255"
+  },
+  "fixed_params": {
+    "norm": "inf"
+  },
+  "cost_model": {
+    "passes_per_image": 1,
+    "cpu_only": false
+  },
+  "requires_gradients": true,
+  "id": "8d15422d-f111-5c7e-96eb-e704767e6218",
+  "spec_sha256": "a6d81b6643af13e1d2f7983ce51340f54c26629304f1fdd98b954c236c1e735f",
+  "display": {
+    "title_vi": "FGSM (một bước)",
+    "title_en": "FGSM (single step)",
+    "description_vi": "Tấn công white-box một bước theo dấu gradient của loss (chuẩn L∞). Nhanh, là mức nền để so với PGD. Level là eps theo đơn vị 1/255 trên ảnh letterbox.",
+    "description_en": "Single-step white-box attack along the sign of the loss gradient (L∞). Fast baseline to compare against PGD. Level is eps in units of 1/255 on the letterboxed image.",
+    "default_levels": [
+      2.0,
+      4.0,
+      8.0,
+      16.0
+    ],
+    "recommended_levels": [
+      1.0,
+      2.0,
+      4.0,
+      8.0,
+      16.0
+    ],
+    "quick_try_level": 8.0
+  }
+}

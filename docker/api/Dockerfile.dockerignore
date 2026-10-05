@@ -8,5 +8,6 @@
 !attacks/
 !backend/
 !docker/api/entrypoint.sh
+!configs/
 **/__pycache__
 **/tests/

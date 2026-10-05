@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Lock, TriangleAlert } from 'lucide-react'
+import { Boxes, Images, Lock, TriangleAlert } from 'lucide-react'
 import type { Dispatch, ReactNode } from 'react'
 
 import { LoadError } from '@/components/LoadError'
@@ -10,7 +10,14 @@ import type {
   EstimateResponse,
   ModelSummary,
 } from '@/contracts/api'
-import { ATTACK_KIND_LABEL, ATTACK_KINDS, ATTACK_PLAIN } from '@/lib/attack-kinds'
+import {
+  ATTACK_EXPLAIN,
+  ATTACK_KIND_LABEL,
+  ATTACK_KINDS,
+  ATTACK_PLAIN,
+  attackLook,
+  paramPlain,
+} from '@/lib/attack-kinds'
 import { cn } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
@@ -27,6 +34,7 @@ import {
   useSlices,
   useTrainingSlices,
 } from './api'
+import { ChoiceCard } from './ChoiceCard'
 import { LevelChips } from './LevelChips'
 import { catalogPreset, suggestedLevels } from './levels'
 import { LOCK_LABEL, requiredLocks } from './protocol'
@@ -72,47 +80,6 @@ function FieldErrorText({ message }: { message?: string }) {
     <p role="alert" className="text-sm text-destructive">
       {message}
     </p>
-  )
-}
-
-/** Thẻ chọn một trong nhiều (radio), vùng chạm ≥ 44px. */
-function ChoiceCard({
-  selected,
-  onSelect,
-  children,
-  disabled = false,
-}: {
-  selected: boolean
-  onSelect: () => void
-  children: ReactNode
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      disabled={disabled}
-      onClick={onSelect}
-      className={cn(
-        'group flex min-h-11 w-full min-w-0 items-start gap-3 rounded-xl border bg-surface-solid p-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.05)] transition-[border-color,box-shadow,background-color] duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
-        selected
-          ? 'border-navy shadow-[0_0_0_1px_var(--navy)]'
-          : 'border-line hover:border-input hover:shadow-[0_4px_14px_rgba(16,24,40,0.07)]',
-        disabled && 'cursor-not-allowed opacity-60',
-      )}
-    >
-      <span className="flex min-w-0 flex-1 flex-col items-start gap-1">{children}</span>
-      <span
-        aria-hidden
-        className={cn(
-          'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors',
-          selected ? 'border-navy bg-navy' : 'border-input',
-        )}
-      >
-        {selected && <span className="size-2 rounded-full bg-primary-foreground" />}
-      </span>
-    </button>
   )
 }
 
@@ -206,11 +173,23 @@ export function ModelStep({ draft, dispatch, errors }: StepProps) {
             selected={draft.modelId === model.id}
             onSelect={() => dispatch({ type: 'model', id: model.id })}
           >
-            <span className="font-medium break-all">{model.name}</span>
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span className="tile size-8 [--tile-bg:#f5f3ff] [--tile-fg:#6d28d9]" aria-hidden>
+                <Boxes className="size-4" />
+              </span>
+              <span className="font-medium break-all">{model.name}</span>
+            </span>
             <span className="text-sm text-muted-foreground">
               {model.framework} · {model.class_names.length} class · ảnh {model.input_size}px
             </span>
-            {!model.supports_gradients && <Badge tone="warning">Không hỗ trợ gradient</Badge>}
+            <span className="flex flex-wrap gap-1">
+              <Badge>Nhận diện vật thể (bounding box)</Badge>
+              {model.supports_gradients ? (
+                <Badge>Hỗ trợ gradient: chạy được mọi attack</Badge>
+              ) : (
+                <Badge tone="warning">Không hỗ trợ gradient</Badge>
+              )}
+            </span>
           </ChoiceCard>
         ))}
       </div>
@@ -250,10 +229,29 @@ export function DatasetStep({ draft, dispatch, errors }: StepProps) {
                   selected={draft.datasetVersionId === version.id}
                   onSelect={() => dispatch({ type: 'datasetVersion', id: version.id })}
                 >
-                  <span className="font-medium">{dataset.name}</span>
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span
+                      className="tile size-8 [--tile-bg:#e0f2fe] [--tile-fg:#0369a1]"
+                      aria-hidden
+                    >
+                      <Images className="size-4" />
+                    </span>
+                    <span className="font-medium">{dataset.name}</span>
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     {version.num_images} ảnh · {version.manifest_sha256.slice(0, 12)}
                   </span>
+                  <span className="flex flex-wrap gap-1" data-testid="loai-du-lieu">
+                    <Badge>Ảnh camera RGB có nhãn box</Badge>
+                    <Badge>{version.class_names.length} lớp</Badge>
+                  </span>
+                  {version.class_names.length > 0 && (
+                    <span className="text-[13px] text-muted-foreground">
+                      Lớp: {version.class_names.slice(0, 6).join(', ')}
+                      {version.class_names.length > 6 &&
+                        ` và ${version.class_names.length - 6} lớp khác`}
+                    </span>
+                  )}
                   {!dataset.anonymized && (
                     <Badge>Chưa ẩn danh: ảnh failure case được làm mờ mặt và biển số</Badge>
                   )}
@@ -281,6 +279,12 @@ export function DatasetStep({ draft, dispatch, errors }: StepProps) {
                     <span className="text-sm text-muted-foreground">
                       {slice.size} ảnh · seed {slice.seed}
                     </span>
+                    {slice.classes.length > 0 && (
+                      <span className="text-[13px] text-muted-foreground">
+                        Tính {slice.classes.length} lớp: {slice.classes.slice(0, 4).join(', ')}
+                        {slice.classes.length > 4 && '…'}
+                      </span>
+                    )}
                   </ChoiceCard>
                 ))}
               </div>
@@ -476,6 +480,8 @@ export function AttackStep({
                 const chosen = index >= 0 ? draft.attacks[index] : undefined
                 const lock = lockOf(draft, spec.id)
                 const incompatible = spec.requires_gradients && model?.supports_gradients === false
+                const { icon: Icon, tile } = attackLook(spec)
+                const explain = ATTACK_EXPLAIN[spec.name]
                 return (
                   <div
                     key={spec.id}
@@ -498,6 +504,9 @@ export function AttackStep({
                           })
                         }
                       />
+                      <span className={cn('tile size-9', tile)} aria-hidden>
+                        <Icon className="size-[18px]" />
+                      </span>
                       <span className="flex min-w-0 flex-col">
                         <span className="font-medium">
                           {spec.name}{' '}
@@ -522,6 +531,20 @@ export function AttackStep({
                         </span>
                       )}
                     </label>
+                    {(explain || chosen) && (
+                      <dl className="grid gap-x-3 gap-y-0.5 pl-8 text-[13px] leading-5 sm:grid-cols-[auto_minmax(0,1fr)]">
+                        {explain && (
+                          <>
+                            <dt className="font-medium">Cách hoạt động</dt>
+                            <dd className="text-muted-foreground">{explain.how}</dd>
+                            <dt className="font-medium">Mô phỏng</dt>
+                            <dd className="text-muted-foreground">{explain.risk}</dd>
+                          </>
+                        )}
+                        <dt className="font-medium">Level</dt>
+                        <dd className="text-muted-foreground">{paramPlain(spec.primary_param)}</dd>
+                      </dl>
+                    )}
                     {incompatible && (
                       <p className="flex items-center gap-2 text-sm text-threshold">
                         <TriangleAlert aria-hidden="true" className="size-4 shrink-0" />

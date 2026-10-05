@@ -1,6 +1,6 @@
 import { createColumnHelper, tableFeatures, useTable } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
-import { FlaskConical, Plus } from 'lucide-react'
+import { FlaskConical, Plus, ScanSearch } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 
 import { can } from '@/auth/permissions'
@@ -151,14 +151,22 @@ export function ExperimentsPage() {
         title="Experiment"
         description="Mỗi experiment chạy một nhóm attack trên một model và một slice ảnh. Bấm vào một dòng để xem tiến độ, kết quả và các ảnh bị đánh lừa."
         actions={
-          canCreate ? (
-            <Button asChild size="lg">
-              <Link to="/experiments/new">
-                <Plus aria-hidden />
-                Tạo experiment
+          <>
+            {canCreate && (
+              <Button asChild size="lg">
+                <Link to="/experiments/new">
+                  <Plus aria-hidden />
+                  Tạo experiment
+                </Link>
+              </Button>
+            )}
+            <Button asChild size="lg" variant="outline">
+              <Link to="/quick-try">
+                <ScanSearch aria-hidden />
+                Thử nhanh một ảnh
               </Link>
             </Button>
-          ) : undefined
+          </>
         }
       />
       <div className="flex flex-col gap-4 md:flex-row md:items-end">

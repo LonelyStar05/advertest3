@@ -16,9 +16,9 @@ from sqlalchemy.orm import Session
 
 from advertest_contracts.enums import ExperimentStatus, ProtocolStatus
 from advertest_contracts.models import (
-    AttackSpec,
     AttackSpecAdminPage,
     AttackSpecAdminView,
+    AttackSpecView,
     ClassMappingSummary,
     ComputeTargetPublic,
     DatasetSummary,
@@ -150,17 +150,24 @@ def list_class_mappings(
     ]
 
 
-def list_attack_specs(session: Session) -> list[AttackSpec]:
-    """Chỉ spec đang hoạt động (requirements.md Phase 5)."""
+def _spec_data(row: m.AttackSpecRow) -> dict[str, object]:
+    """JSON của spec kèm `display` (bổ sung 2026-10; null khi chưa khai)."""
+    return {
+        **row.spec,
+        "id": str(row.id),
+        "spec_sha256": row.spec_sha256,
+        "display": row.display,
+    }
+
+
+def list_attack_specs(session: Session) -> list[AttackSpecView]:
+    """Chỉ spec đang hoạt động (requirements.md Phase 5), kèm thông tin hiển thị."""
     rows = session.scalars(
         select(m.AttackSpecRow)
         .where(m.AttackSpecRow.is_active)
         .order_by(m.AttackSpecRow.kind, m.AttackSpecRow.name, m.AttackSpecRow.version)
     )
-    return [
-        AttackSpec.model_validate({**row.spec, "id": str(row.id), "spec_sha256": row.spec_sha256})
-        for row in rows
-    ]
+    return [AttackSpecView.model_validate(_spec_data(row)) for row in rows]
 
 
 def list_protocols(session: Session, *, include_retired: bool = False) -> list[ProtocolSummary]:
@@ -249,14 +256,7 @@ def list_attack_specs_admin(
     )
     page, more = rows[:limit], len(rows) > limit
     items = [
-        AttackSpecAdminView.model_validate(
-            {
-                **row.spec,
-                "id": str(row.id),
-                "spec_sha256": row.spec_sha256,
-                "is_active": row.is_active,
-            }
-        )
+        AttackSpecAdminView.model_validate({**_spec_data(row), "is_active": row.is_active})
         for row in page
     ]
     last = page[-1] if page and more else None

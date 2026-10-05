@@ -96,6 +96,9 @@ export function nextStep(
         tone: 'warning',
         title: 'Reviewer yêu cầu sửa',
         body: 'Đọc nhận xét ở tab Review, rồi nhân bản để sửa cấu hình và chạy lại. Bản này giữ nguyên làm lịch sử.',
+        primary: can(me, 'experiment.create')
+          ? { label: 'Nhân bản để sửa', to: `/experiments/new?clone=${e.id}` }
+          : undefined,
         secondary: { label: 'Đọc nhận xét', to: '?tab=review' },
       }
     case 'rejected':

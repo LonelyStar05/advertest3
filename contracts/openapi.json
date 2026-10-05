@@ -1558,7 +1558,7 @@
           "attack-specs"
         ],
         "summary": "List Attack Specs",
-        "description": "Chỉ spec đang hoạt động.",
+        "description": "Chỉ spec đang hoạt động; `display` (tên, mô tả, level gợi ý) null khi chưa khai.",
         "operationId": "list_attack_specs_attack_specs_get",
         "responses": {
           "200": {
@@ -1567,7 +1567,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/AttackSpec"
+                    "$ref": "#/components/schemas/AttackSpecView"
                   },
                   "type": "array",
                   "title": "Response List Attack Specs Attack Specs Get"
@@ -1722,6 +1722,197 @@
           }
         },
         "x-permission": "attack_catalog.manage"
+      }
+    },
+    "/quick-try": {
+      "post": {
+        "tags": [
+          "quick-try"
+        ],
+        "summary": "Run Quick Try",
+        "description": "Chạy model trên một ảnh sạch và ảnh sau biến đổi ngay trong tiến trình API (CPU, vài giây;\ncác lượt chạy xếp hàng). Không tạo experiment, không lưu gì; không phải kết quả chính thức.\nBox theo tọa độ ảnh gốc; ảnh trả dạng data URL WebP, đã làm mờ khi dataset chưa ẩn danh.",
+        "operationId": "run_quick_try_quick_try_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickTryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickTryResult"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Chưa cài đặt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu phiên hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Thiếu permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_error (sai schema) hoặc invalid_request (sai nghiệp vụ)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tồn tại",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "x-permission": "model.read"
+      }
+    },
+    "/quick-try/images": {
+      "get": {
+        "tags": [
+          "quick-try"
+        ],
+        "summary": "List Quick Try Images",
+        "description": "Ảnh mẫu chọn được (ảnh thuộc slice đã đăng ký), kèm thumbnail WebP đã làm mờ.",
+        "operationId": "list_quick_try_images_quick_try_images_get",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dataset_version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dataset Version"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 12,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuickTryImage"
+                  },
+                  "title": "Response List Quick Try Images Quick Try Images Get"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Chưa cài đặt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Thiếu phiên hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Thiếu permission",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_error (sai schema) hoặc invalid_request (sai nghiệp vụ)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-permission": "dataset.read"
       }
     },
     "/protocols": {
@@ -6445,6 +6636,16 @@
             "title": "Spec Sha256",
             "description": "Hash của mọi trường trừ id và chính nó"
           },
+          "display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttackSpecDisplay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active"
@@ -6467,6 +6668,201 @@
         ],
         "title": "AttackSpecAdminView",
         "description": "Spec trong trang `/admin/attacks`: mọi version, kể cả spec đã tắt."
+      },
+      "AttackSpecDisplay": {
+        "properties": {
+          "title_vi": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Vi",
+            "description": "Tên hiển thị tiếng Việt"
+          },
+          "title_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title En",
+            "description": "Tên hiển thị tiếng Anh"
+          },
+          "description_vi": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Vi"
+          },
+          "description_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description En"
+          },
+          "default_levels": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Default Levels",
+            "description": "Level điền sẵn khi chọn attack ở wizard"
+          },
+          "recommended_levels": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Recommended Levels",
+            "description": "Level gợi ý (chip) cho người dùng chọn nhanh"
+          },
+          "quick_try_level": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quick Try Level",
+            "description": "Level mặc định ở trang Thử nhanh"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AttackSpecDisplay",
+        "description": "Thông tin hiển thị của attack spec (bổ sung 2026-10, docs/mo-rong-bang-config.md).\n\nKhông thuộc phần thân nên không vào `spec_sha256`: sửa mô tả hay level gợi ý không làm đổi\nkết quả, nên không cần tăng `version`. Level theo đơn vị `primary_param.unit` của spec."
+      },
+      "AttackSpecView": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Name"
+          },
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Version"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AttackKind"
+          },
+          "access": {
+            "$ref": "#/components/schemas/AttackAccess",
+            "description": "Corruption và occlusion dùng not_applicable; attack không dùng giá trị này"
+          },
+          "art_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Art Class",
+            "description": "Null với corruption và occlusion"
+          },
+          "primary_param": {
+            "$ref": "#/components/schemas/PrimaryParam"
+          },
+          "fixed_params": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "object",
+            "title": "Fixed Params"
+          },
+          "cost_model": {
+            "$ref": "#/components/schemas/CostModel"
+          },
+          "requires_gradients": {
+            "type": "boolean",
+            "title": "Requires Gradients"
+          },
+          "requires_training": {
+            "type": "boolean",
+            "title": "Requires Training",
+            "description": "Phase 6: phải train (patch) trên slice huấn luyện trước khi đánh giá"
+          },
+          "training": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrainingParams"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Có khi và chỉ khi requires_training = true"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "spec_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Spec Sha256",
+            "description": "Hash của mọi trường trừ id và chính nó"
+          },
+          "display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttackSpecDisplay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "version",
+          "kind",
+          "access",
+          "primary_param",
+          "fixed_params",
+          "cost_model",
+          "requires_gradients",
+          "id",
+          "spec_sha256"
+        ],
+        "title": "AttackSpecView",
+        "description": "`GET /attack-specs`: spec kèm thông tin hiển thị; `display = null` khi chưa khai."
       },
       "AuditActor": {
         "properties": {
@@ -10566,6 +10962,448 @@
           "ahead_seconds"
         ],
         "title": "QueueEstimate"
+      },
+      "QuickTryBox": {
+        "properties": {
+          "bbox": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Bbox"
+          },
+          "class_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Class Name",
+            "description": "Class của model"
+          },
+          "score": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score"
+          },
+          "matched": {
+            "type": "boolean",
+            "title": "Matched",
+            "description": "Ảnh sạch: còn được phát hiện sau biến đổi (IoU >= 0.5, cùng class). Ảnh sau biến đổi: khớp một phát hiện của ảnh sạch (false là phát hiện mới)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "bbox",
+          "class_name",
+          "score",
+          "matched"
+        ],
+        "title": "QuickTryBox",
+        "description": "Một phát hiện có score >= operating_conf; bbox xyxy pixel của **ảnh gốc**."
+      },
+      "QuickTryImage": {
+        "properties": {
+          "dataset_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Dataset Version Id"
+          },
+          "dataset_name": {
+            "type": "string",
+            "title": "Dataset Name"
+          },
+          "image_id": {
+            "type": "string",
+            "title": "Image Id"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "num_objects": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Num Objects",
+            "description": "Số annotation của ảnh trong manifest"
+          },
+          "thumbnail": {
+            "type": "string",
+            "pattern": "^data:image/(webp|png|jpeg);base64,",
+            "title": "Thumbnail",
+            "description": "WebP rộng 320 px, đã làm mờ khi dataset chưa ẩn danh"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "dataset_version_id",
+          "dataset_name",
+          "image_id",
+          "width",
+          "height",
+          "num_objects",
+          "thumbnail"
+        ],
+        "title": "QuickTryImage",
+        "description": "Một ảnh mẫu chọn được ở Thử nhanh (`GET /quick-try/images`)."
+      },
+      "QuickTryRequest": {
+        "properties": {
+          "model_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Model Version Id"
+          },
+          "attack_spec_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attack Spec Id"
+          },
+          "attack_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attack Name"
+          },
+          "level": {
+            "type": "number",
+            "title": "Level",
+            "description": "Theo đơn vị primary_param.unit của spec, trong [min, max]"
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 0
+          },
+          "dataset_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version Id"
+          },
+          "image_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Id"
+          },
+          "image_base64": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8000000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Base64",
+            "description": "PNG hoặc JPEG, base64 thuần hoặc data URL (data:image/...;base64,...)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model_version_id",
+          "level"
+        ],
+        "title": "QuickTryRequest",
+        "description": "`POST /quick-try`. Ảnh: hoặc `dataset_version_id` + `image_id` (ảnh có trong slice đã đăng\nký, xem `GET /quick-try/images`), hoặc `image_base64` (PNG/JPEG tải lên). Attack: đúng một\ntrong `attack_spec_id` hoặc `attack_name` (version đang hoạt động cao nhất)."
+      },
+      "QuickTryResult": {
+        "properties": {
+          "model_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Model Version Id"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name"
+          },
+          "attack_spec_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Attack Spec Id"
+          },
+          "attack_name": {
+            "type": "string",
+            "title": "Attack Name"
+          },
+          "attack_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Attack Version"
+          },
+          "level": {
+            "type": "number",
+            "title": "Level"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Seed"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "dataset",
+              "upload"
+            ],
+            "title": "Source"
+          },
+          "dataset_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Version Id"
+          },
+          "image_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Id"
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Height"
+          },
+          "clean_image": {
+            "type": "string",
+            "pattern": "^data:image/(webp|png|jpeg);base64,",
+            "title": "Clean Image"
+          },
+          "attacked_image": {
+            "type": "string",
+            "pattern": "^data:image/(webp|png|jpeg);base64,",
+            "title": "Attacked Image"
+          },
+          "perturbation_image": {
+            "type": "string",
+            "pattern": "^data:image/(webp|png|jpeg);base64,",
+            "title": "Perturbation Image",
+            "description": "Nhiễu khuếch đại (FGSM, PGD) hoặc vùng khác biệt (corruption, occlusion); ở độ phân giải đầu vào của model (vùng ảnh thật của letterbox 640), không phải width x height"
+          },
+          "clean": {
+            "items": {
+              "$ref": "#/components/schemas/QuickTryBox"
+            },
+            "type": "array",
+            "title": "Clean"
+          },
+          "attacked": {
+            "items": {
+              "$ref": "#/components/schemas/QuickTryBox"
+            },
+            "type": "array",
+            "title": "Attacked"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/QuickTrySummary"
+          },
+          "operating_conf": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Operating Conf"
+          },
+          "labels_source": {
+            "type": "string",
+            "enum": [
+              "ground_truth",
+              "clean_predictions"
+            ],
+            "title": "Labels Source",
+            "description": "Nhãn đưa cho attack: ground truth qua class mapping, hoặc phát hiện trên ảnh sạch khi không có mapping (ảnh tải lên)"
+          },
+          "anonymization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CaseAnonymization"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Làm mờ rule_v1 trên cả ba ảnh; null khi dataset đã ẩn danh"
+          },
+          "timing": {
+            "$ref": "#/components/schemas/QuickTryTiming"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model_version_id",
+          "model_name",
+          "attack_spec_id",
+          "attack_name",
+          "attack_version",
+          "level",
+          "unit",
+          "seed",
+          "source",
+          "dataset_version_id",
+          "image_id",
+          "width",
+          "height",
+          "clean_image",
+          "attacked_image",
+          "perturbation_image",
+          "clean",
+          "attacked",
+          "summary",
+          "operating_conf",
+          "labels_source",
+          "anonymization",
+          "timing"
+        ],
+        "title": "QuickTryResult",
+        "description": "Kết quả Thử nhanh. Ảnh trả dạng data URL WebP đúng kích thước ảnh gốc (`width` x\n`height`), cùng hệ tọa độ với `bbox`; ảnh sau biến đổi được tạo ở không gian letterbox 640 rồi\nphóng về kích thước gốc để hiển thị."
+      },
+      "QuickTrySummary": {
+        "properties": {
+          "clean_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Clean Count"
+          },
+          "attacked_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Attacked Count"
+          },
+          "missed_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Missed Count",
+            "description": "Phát hiện sạch bị mất sau biến đổi"
+          },
+          "new_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "New Count",
+            "description": "Phát hiện mới sau biến đổi (false positive mới)"
+          },
+          "iou_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Iou Threshold",
+            "default": 0.5
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "clean_count",
+          "attacked_count",
+          "missed_count",
+          "new_count"
+        ],
+        "title": "QuickTrySummary"
+      },
+      "QuickTryTiming": {
+        "properties": {
+          "load_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Load Ms"
+          },
+          "clean_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Clean Ms"
+          },
+          "attack_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Attack Ms",
+            "description": "Tạo ảnh biến đổi và predict trên nó"
+          },
+          "total_ms": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Total Ms"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "load_ms",
+          "clean_ms",
+          "attack_ms",
+          "total_ms"
+        ],
+        "title": "QuickTryTiming",
+        "description": "Thời gian (ms) trong tiến trình API; `load_ms` gồm nạp model khi chưa có trong cache."
       },
       "RejectRequest": {
         "properties": {

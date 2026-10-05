@@ -267,9 +267,12 @@ export function MetricCurves({
   runs,
   cleanMap50,
   initialNormalized = false,
+  caption,
 }: {
   runs: RunView[]
   cleanMap50: number | null
+  /** Một câu hướng dẫn cách đọc biểu đồ, hiện ở đầu khối. */
+  caption?: string
   /** Trạng thái ban đầu của công tắc trục chuẩn hóa (test render tĩnh). */
   initialNormalized?: boolean
 }) {
@@ -282,6 +285,7 @@ export function MetricCurves({
   }
   return (
     <div className="space-y-4">
+      {caption && <p className="text-sm text-muted-foreground">{caption}</p>}
       <label className="flex min-h-11 cursor-pointer items-center gap-3">
         <input
           type="checkbox"

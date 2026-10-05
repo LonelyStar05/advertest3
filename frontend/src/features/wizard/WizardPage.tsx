@@ -1,5 +1,5 @@
 import { Check, ChevronLeft, ChevronRight, TriangleAlert, X } from 'lucide-react'
-import { useEffect, useMemo, useReducer, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 
 import { ApiError } from '@/api/errors'
@@ -17,6 +17,7 @@ import {
   useClone,
   useComputeTargets,
   useCreateExperiment,
+  useDatasets,
   useEstimate,
   useModels,
   useProtocol,
@@ -27,6 +28,7 @@ import { COMPLIANCE_LABEL, requiredLocks } from './protocol'
 import {
   buildBody,
   canAdvance,
+  EMPTY_DRAFT,
   missingHint,
   clearDraft,
   type Draft,
@@ -45,6 +47,18 @@ import {
   type Step,
   STEPS,
 } from './state'
+import {
+  type ExperimentTemplate,
+  firstIncomplete,
+  pickDatasetVersion,
+  pickModel,
+  pickProtocol,
+  pickSlice,
+  pickTarget,
+  reachableSteps,
+  templateAttacks,
+} from './quick'
+import { QuickTemplates } from './QuickTemplates'
 import { AttackStep, DatasetStep, ModelStep, ProtocolStep, TargetStep } from './steps'
 import { FloatingDecor } from '@/components/background/FloatingDecor'
 import { WIZARD_DECOR } from '@/components/background/decor-presets'
@@ -59,7 +73,19 @@ const STEP_HINTS: Record<Step, string> = {
   6: 'Kiểm tra lại cấu hình và ước lượng rồi bấm chạy. Kết quả là bản nháp cho tới khi được duyệt.',
 }
 
-function StepBar({ draft, onGo }: { draft: Draft; onGo: (step: Step) => void }) {
+function StepBar({
+  draft,
+  reachable,
+  first,
+  onGo,
+}: {
+  draft: Draft
+  /** Bước nhảy tới được (mọi bước trước đã đủ). */
+  reachable: Step[]
+  /** Bước đầu tiên còn thiếu: các bước trước nó có dấu ✓. */
+  first: Step
+  onGo: (step: Step) => void
+}) {
   const current = STEPS[draft.step - 1]
   return (
     <nav aria-label="Các bước">
@@ -83,20 +109,21 @@ function StepBar({ draft, onGo }: { draft: Draft; onGo: (step: Step) => void }) 
       </div>
       <ol className="hidden items-center gap-1 md:flex">
         {STEPS.map(({ step, title }) => {
-          const done = step < draft.step
           const here = step === draft.step
+          const open = reachable.includes(step)
+          const done = !here && step < first
           return (
             <li key={step} className="flex min-w-0 flex-1 items-center gap-1">
               <button
                 type="button"
-                disabled={step > draft.step}
+                disabled={!open}
                 aria-current={here ? 'step' : undefined}
                 onClick={() => onGo(step)}
                 className={cn(
                   'flex min-h-11 min-w-0 items-center gap-2 rounded-lg px-1.5 text-left text-[13.5px] transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
                   here && 'font-semibold text-foreground',
                   done && 'text-foreground hover:bg-muted',
-                  step > draft.step && 'text-muted-foreground',
+                  !open && 'text-muted-foreground',
                 )}
               >
                 <span
@@ -409,7 +436,13 @@ export function WizardPage() {
   const protocol = useProtocol(draft.protocolId)
   const specs = useAttackSpecs()
   const allSlices = useSlices(null, cloneId !== null)
+  const datasets = useDatasets()
+  const versionSlices = useSlices(draft.datasetVersionId)
   const create = useCreateExperiment()
+  // Mẫu experiment đang được áp: các lựa chọn phụ thuộc nhau (khóa protocol → slice tối thiểu →
+  // slice → mapping) nên áp từng bước khi dữ liệu tải xong.
+  const [quick, setQuick] = useState<ExperimentTemplate | null>(null)
+  const quickAttacks = useRef(false)
 
   useEffect(() => saveDraft(draft), [draft])
 
@@ -487,6 +520,58 @@ export function WizardPage() {
   })
 
   const go = (step: Step) => dispatch({ type: 'go', step })
+  const options = { maxLimitSeconds: target?.max_time_limit_s, levelInputError }
+  const first = firstIncomplete(draft, options)
+  const reachable = reachableSteps(draft, options)
+
+  const startQuick = (template: ExperimentTemplate) => {
+    const p = pickProtocol(protocols.data ?? [])
+    const m = pickModel(models.data ?? [])
+    const t = pickTarget(targets.data ?? [])
+    dispatch({
+      type: 'load',
+      draft: {
+        ...EMPTY_DRAFT,
+        protocolId: p?.id ?? null,
+        modelId: m?.id ?? null,
+        datasetVersionId: pickDatasetVersion(datasets.data ?? []),
+        targetId: t?.id ?? null,
+        limitSeconds: t?.default_time_limit_s ?? null,
+      },
+    })
+    quickAttacks.current = false
+    setQuick(p && m ? template : null)
+  }
+
+  useEffect(() => {
+    if (!quick) return
+    const finish = (step: Step) => {
+      setQuick(null)
+      dispatch({ type: 'go', step })
+    }
+    if (!draft.protocolId || draft.requiredFor !== draft.protocolId) return
+    if (!draft.datasetVersionId) return finish(3)
+    if (!draft.sliceId) {
+      if (!versionSlices.data) return
+      const slice = pickSlice(versionSlices.data, draft.minSliceSize, quick.slice)
+      if (slice) dispatch({ type: 'slice', id: slice.id })
+      else finish(3)
+      return
+    }
+    if (!draft.mappingId) {
+      if (!mappings.data) return
+      if (mappings.data.length > 0) dispatch({ type: 'mapping', id: mappings.data[0].id })
+      else finish(3)
+      return
+    }
+    if (!quickAttacks.current) {
+      if (!specs.data) return
+      dispatch({ type: 'preset', attacks: templateAttacks(quick, draft.attacks, specs.data) })
+      quickAttacks.current = true
+      return
+    }
+    finish(quick.extra === 'catalog' ? (Math.min(first, 4) as Step) : first)
+  }, [quick, draft, versionSlices.data, mappings.data, specs.data, first])
   const next = () => {
     if (draft.step < 6 && advance) go((draft.step + 1) as Step)
   }
@@ -533,7 +618,7 @@ export function WizardPage() {
         </p>
       </div>
       <div className="panel relative z-10 mx-3 px-3 py-2 md:mx-6">
-        <StepBar draft={draft} onGo={go} />
+        <StepBar draft={draft} reachable={reachable} first={first} onGo={go} />
       </div>
       {cloneId !== null && cloneFailed && (
         <FormAlert>Không tải được cấu hình để nhân bản.</FormAlert>
@@ -562,6 +647,12 @@ export function WizardPage() {
             <p className="text-muted-foreground">Đang tải cấu hình để nhân bản…</p>
           ) : (
             <>
+              {draft.step === 1 && cloneId === null && (
+                <QuickTemplates busy={quick?.id ?? null} onPick={startQuick} />
+              )}
+              {draft.step === 1 && cloneId === null && (
+                <h3 className="border-t border-line pt-4 font-semibold">Hoặc tự chọn protocol</h3>
+              )}
               {draft.step === 1 && <ProtocolStep {...stepProps} />}
               {draft.step === 2 && <ModelStep {...stepProps} />}
               {draft.step === 3 && <DatasetStep {...stepProps} />}
@@ -592,8 +683,8 @@ export function WizardPage() {
               Chưa ước lượng được: {errorMessage(estimate.error)}
             </p>
           )}
-          {/* Desktop: nút điều hướng ngay dưới nội dung bước. */}
-          <div className="hidden items-center gap-3 border-t border-line pt-5 md:flex">
+          {/* Desktop: thanh điều hướng dính đáy khung (luôn thấy nút và ước lượng, không cần cuộn). */}
+          <div className="sticky bottom-0 z-10 -mx-5 -mb-5 hidden items-center gap-3 rounded-b-[12px] border-t border-line bg-surface-solid px-5 py-4 shadow-[0_-8px_20px_-12px_rgba(16,24,40,0.18)] md:-mx-6 md:-mb-6 md:flex md:px-6">
             <Button
               variant="ghost"
               onClick={() => go((draft.step - 1) as Step)}
@@ -602,6 +693,14 @@ export function WizardPage() {
               <ChevronLeft aria-hidden="true" />
               Lùi
             </Button>
+            {draft.step >= 4 && (
+              <p className="text-sm text-muted-foreground" data-testid="uoc-luong-dieu-huong">
+                Ước lượng:{' '}
+                <strong className="text-foreground tabular-nums">
+                  {estimateText(estimate.data)}
+                </strong>
+              </p>
+            )}
             {draft.step < 6 && !advance && (
               <p className="ml-auto text-right text-sm text-muted-foreground">{missing}</p>
             )}

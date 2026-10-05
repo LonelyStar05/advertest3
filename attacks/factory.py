@@ -15,10 +15,13 @@ from art.estimators.estimator import BaseEstimator
 
 from advertest_contracts.enums import AttackKind
 from advertest_contracts.models import AttackSpec
-from attacks.art_adapter import ArtPerturbation, UnsupportedAttack
+from attacks.art_adapter import ArtPerturbation, UnsupportedAttack, check_art_spec
 from attacks.art_adapter import build_perturbation as build_art_perturbation
 from attacks.corruptions.adapter import CorruptionPerturbation
 from attacks.occlusion.adapter import OcclusionPerturbation
+
+# art_class của spec cần train (patch): dựng bằng `attacks.patch`, không qua adapter ART.
+PATCH_ART_CLASS = "RobustDPatch"
 
 AnyPerturbation = ArtPerturbation | CorruptionPerturbation | OcclusionPerturbation
 
@@ -33,3 +36,20 @@ def build_perturbation(spec: AttackSpec, estimator: BaseEstimator | None) -> Any
     if estimator is None:
         raise UnsupportedAttack(f"{spec.name}: attack cần estimator của model")
     return build_art_perturbation(spec, estimator)
+
+
+def check_supported(spec: AttackSpec) -> None:
+    """Báo lỗi (`UnsupportedAttack` hoặc `UnsupportedTransform`) nếu code hiện có không dựng được
+    spec; không cần model. Dùng khi khai spec mới bằng YAML (`configs/attacks/`)."""
+    if spec.kind == AttackKind.CORRUPTION:
+        CorruptionPerturbation(spec)
+    elif spec.kind == AttackKind.OCCLUSION:
+        OcclusionPerturbation(spec)
+    elif spec.requires_training:
+        if spec.art_class != PATCH_ART_CLASS or spec.primary_param.name != "area_ratio":
+            raise UnsupportedAttack(
+                f"{spec.name}: spec cần train chỉ hỗ trợ art_class {PATCH_ART_CLASS} với tham số"
+                " chính area_ratio"
+            )
+    else:
+        check_art_spec(spec)

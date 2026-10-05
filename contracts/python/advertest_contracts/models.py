@@ -228,6 +228,56 @@ def compute_spec_sha256(spec: AttackSpecBody | Mapping[str, Any]) -> str:
     return sha256_of(AttackSpecBody.model_validate(data))
 
 
+class AttackSpecDisplay(_Model):
+    """Thông tin hiển thị của attack spec (bổ sung 2026-10, docs/mo-rong-bang-config.md).
+
+    Không thuộc phần thân nên không vào `spec_sha256`: sửa mô tả hay level gợi ý không làm đổi
+    kết quả, nên không cần tăng `version`. Level theo đơn vị `primary_param.unit` của spec.
+    """
+
+    title_vi: str | None = Field(default=None, min_length=1, description="Tên hiển thị tiếng Việt")
+    title_en: str | None = Field(default=None, min_length=1, description="Tên hiển thị tiếng Anh")
+    description_vi: str | None = Field(default=None, min_length=1)
+    description_en: str | None = Field(default=None, min_length=1)
+    default_levels: list[float] = Field(
+        default_factory=list, description="Level điền sẵn khi chọn attack ở wizard"
+    )
+    recommended_levels: list[float] = Field(
+        default_factory=list, description="Level gợi ý (chip) cho người dùng chọn nhanh"
+    )
+    quick_try_level: float | None = Field(
+        default=None, description="Level mặc định ở trang Thử nhanh"
+    )
+
+
+def display_levels_error(spec: AttackSpecBody, display: AttackSpecDisplay) -> str | None:
+    """Lỗi nếu level trong `display` nằm ngoài dải (hay ngoài `values` rời rạc) của spec."""
+    param = spec.primary_param
+    levels = [*display.default_levels, *display.recommended_levels]
+    if display.quick_try_level is not None:
+        levels.append(display.quick_try_level)
+    for level in levels:
+        if not param.min <= level <= param.max:
+            return f"level {level:g} ngoài dải [{param.min:g}, {param.max:g}] ({param.unit})"
+        if param.type == "discrete" and level not in (param.values or []):
+            return f"level {level:g} không thuộc values {param.values} ({param.unit})"
+    return None
+
+
+class AttackSpecView(AttackSpec):
+    """`GET /attack-specs`: spec kèm thông tin hiển thị; `display = null` khi chưa khai."""
+
+    display: AttackSpecDisplay | None = None
+
+    @model_validator(mode="after")
+    def _check_display(self) -> AttackSpecView:
+        if self.display is not None:
+            error = display_levels_error(self, self.display)
+            if error is not None:
+                raise ValueError(f"display: {error}")
+        return self
+
+
 # ---------------------------------------------------------------- AttackConfig
 
 
@@ -2471,7 +2521,7 @@ class ProtocolSummary(_Model):
 # ---------------------------------------------------------------- Attack catalog cho admin
 
 
-class AttackSpecAdminView(AttackSpec):
+class AttackSpecAdminView(AttackSpecView):
     """Spec trong trang `/admin/attacks`: mọi version, kể cả spec đã tắt."""
 
     is_active: bool
@@ -3059,3 +3109,141 @@ class ReportDetail(_Model):
 
 
 ExperimentDetail.model_rebuild()
+
+
+# ---------------------------------------------------------------- Thử nhanh (bổ sung 2026-10)
+# docs/thu-nhanh.md: chạy model trên một ảnh sạch và ảnh sau biến đổi ngay trong tiến trình API,
+# không tạo experiment, không ghi DB hay MinIO, không phải kết quả chính thức.
+
+# Giới hạn độ dài chuỗi base64 của ảnh tải lên (khoảng 6 MB ảnh gốc).
+QUICK_TRY_MAX_UPLOAD_CHARS = 8_000_000
+QUICK_TRY_IOU = 0.5
+DataUrl = Annotated[str, StringConstraints(pattern=r"^data:image/(webp|png|jpeg);base64,")]
+
+
+class QuickTryRequest(_Model):
+    """`POST /quick-try`. Ảnh: hoặc `dataset_version_id` + `image_id` (ảnh có trong slice đã đăng
+    ký, xem `GET /quick-try/images`), hoặc `image_base64` (PNG/JPEG tải lên). Attack: đúng một
+    trong `attack_spec_id` hoặc `attack_name` (version đang hoạt động cao nhất)."""
+
+    model_version_id: UUID
+    attack_spec_id: UUID | None = None
+    attack_name: str | None = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
+    level: float = Field(description="Theo đơn vị primary_param.unit của spec, trong [min, max]")
+    seed: NonNegativeInt = 0
+    dataset_version_id: UUID | None = None
+    image_id: str | None = Field(default=None, min_length=1)
+    image_base64: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=QUICK_TRY_MAX_UPLOAD_CHARS,
+        description="PNG hoặc JPEG, base64 thuần hoặc data URL (data:image/...;base64,...)",
+    )
+
+    @model_validator(mode="after")
+    def _check(self) -> QuickTryRequest:
+        if (self.attack_spec_id is None) == (self.attack_name is None):
+            raise ValueError("Cần đúng một trong attack_spec_id hoặc attack_name")
+        from_dataset = self.dataset_version_id is not None or self.image_id is not None
+        if from_dataset and (self.dataset_version_id is None or self.image_id is None):
+            raise ValueError("Ảnh của dataset cần cả dataset_version_id và image_id")
+        if from_dataset == (self.image_base64 is not None):
+            raise ValueError(
+                "Cần đúng một nguồn ảnh: dataset_version_id + image_id hoặc image_base64"
+            )
+        return self
+
+
+class QuickTryBox(_Model):
+    """Một phát hiện có score >= operating_conf; bbox xyxy pixel của **ảnh gốc**."""
+
+    bbox: PixelBBox
+    class_name: str = Field(min_length=1, description="Class của model")
+    score: UnitFloat
+    matched: bool = Field(
+        description="Ảnh sạch: còn được phát hiện sau biến đổi (IoU >= 0.5, cùng class). Ảnh sau"
+        " biến đổi: khớp một phát hiện của ảnh sạch (false là phát hiện mới)"
+    )
+
+
+class QuickTrySummary(_Model):
+    clean_count: NonNegativeInt
+    attacked_count: NonNegativeInt
+    missed_count: NonNegativeInt = Field(description="Phát hiện sạch bị mất sau biến đổi")
+    new_count: NonNegativeInt = Field(description="Phát hiện mới sau biến đổi (false positive mới)")
+    iou_threshold: UnitFloat = QUICK_TRY_IOU
+
+
+class QuickTryTiming(_Model):
+    """Thời gian (ms) trong tiến trình API; `load_ms` gồm nạp model khi chưa có trong cache."""
+
+    load_ms: NonNegativeFloat
+    clean_ms: NonNegativeFloat
+    attack_ms: NonNegativeFloat = Field(description="Tạo ảnh biến đổi và predict trên nó")
+    total_ms: NonNegativeFloat
+
+
+class QuickTryResult(_Model):
+    """Kết quả Thử nhanh. Ảnh trả dạng data URL WebP đúng kích thước ảnh gốc (`width` x
+    `height`), cùng hệ tọa độ với `bbox`; ảnh sau biến đổi được tạo ở không gian letterbox 640 rồi
+    phóng về kích thước gốc để hiển thị."""
+
+    model_version_id: UUID
+    model_name: str
+    attack_spec_id: UUID
+    attack_name: str
+    attack_version: PositiveInt
+    level: float
+    unit: str
+    seed: NonNegativeInt
+    source: Literal["dataset", "upload"]
+    dataset_version_id: UUID | None
+    image_id: str | None
+    width: PositiveInt
+    height: PositiveInt
+    clean_image: DataUrl
+    attacked_image: DataUrl
+    perturbation_image: DataUrl = Field(
+        description="Nhiễu khuếch đại (FGSM, PGD) hoặc vùng khác biệt (corruption, occlusion);"
+        " ở độ phân giải đầu vào của model (vùng ảnh thật của letterbox 640), không phải width x"
+        " height"
+    )
+    clean: list[QuickTryBox]
+    attacked: list[QuickTryBox]
+    summary: QuickTrySummary
+    operating_conf: UnitFloat
+    labels_source: Literal["ground_truth", "clean_predictions"] = Field(
+        description="Nhãn đưa cho attack: ground truth qua class mapping, hoặc phát hiện trên ảnh"
+        " sạch khi không có mapping (ảnh tải lên)"
+    )
+    anonymization: CaseAnonymization | None = Field(
+        description="Làm mờ rule_v1 trên cả ba ảnh; null khi dataset đã ẩn danh"
+    )
+    timing: QuickTryTiming
+
+    @model_validator(mode="after")
+    def _check(self) -> QuickTryResult:
+        if (self.source == "dataset") != (
+            self.dataset_version_id is not None and self.image_id is not None
+        ):
+            raise ValueError("dataset_version_id và image_id có khi và chỉ khi source = dataset")
+        summary = self.summary
+        if summary.clean_count != len(self.clean) or summary.attacked_count != len(self.attacked):
+            raise ValueError("summary phải khớp số phát hiện")
+        if summary.missed_count != sum(not b.matched for b in self.clean):
+            raise ValueError("missed_count phải bằng số box sạch không khớp")
+        if summary.new_count != sum(not b.matched for b in self.attacked):
+            raise ValueError("new_count phải bằng số box sau biến đổi không khớp")
+        return self
+
+
+class QuickTryImage(_Model):
+    """Một ảnh mẫu chọn được ở Thử nhanh (`GET /quick-try/images`)."""
+
+    dataset_version_id: UUID
+    dataset_name: str
+    image_id: str
+    width: PositiveInt
+    height: PositiveInt
+    num_objects: NonNegativeInt = Field(description="Số annotation của ảnh trong manifest")
+    thumbnail: DataUrl = Field(description="WebP rộng 320 px, đã làm mờ khi dataset chưa ẩn danh")

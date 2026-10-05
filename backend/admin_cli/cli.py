@@ -22,19 +22,30 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from advertest_contracts.enums import ExperimentStatus
+from attacks.catalog_config import AttackConfigError, AttackEntry, load_attack_dir
 from backend.app.db import models as m
 from backend.app.db.engine import make_engine
-from backend.app.services import audit, compute_targets, estimate, experiments, registry
+from backend.app.services import (
+    audit,
+    catalog_sync,
+    compute_targets,
+    estimate,
+    experiments,
+    registry,
+)
 from backend.app.services.errors import ServiceError
 from backend.app.storage import Buckets, make_s3_client
+from ml_core.config_files import ConfigFileError, apply_to_store, load_config_tree
 from ml_core.runner.config import load_config
-from ml_core.store import LocalStore
+from ml_core.store import DEFAULT_STORE_DIR, LocalStore
 
 app = typer.Typer(help="Quản trị AdverTest phía server (compute target, dữ liệu, experiment).")
 target_app = typer.Typer(help="Compute target và token của worker.")
 experiment_app = typer.Typer(help="Theo dõi và hủy experiment.")
 app.add_typer(target_app, name="compute-target")
 app.add_typer(experiment_app, name="experiment")
+catalog_app = typer.Typer(help="Attack catalog khai bằng YAML (configs/attacks/).")
+app.add_typer(catalog_app, name="catalog")
 
 WATCH_INTERVAL_S = 2.0
 TERMINAL = (ExperimentStatus.COMPLETED, ExperimentStatus.CANCELLED)
@@ -156,6 +167,96 @@ def import_local(
     typer.echo(
         f"Model: {len(report.models)}, dataset: {len(report.datasets)},"
         f" mapping: {len(report.mappings)}, slice: {len(report.slices)};"
+        f" ảnh mới upload: {report.images_uploaded}, đã có: {report.images_present}."
+    )
+
+
+# ---------------------------------------------------------------- khai bằng YAML (configs/)
+
+DEFAULT_ATTACK_DIR = Path("configs/attacks")
+
+
+def _load_attacks(directory: Path) -> list[AttackEntry]:
+    try:
+        return load_attack_dir(directory)
+    except AttackConfigError as exc:
+        typer.echo(f"Lỗi: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+
+@catalog_app.command("check")
+def catalog_check(
+    directory: Annotated[Path, typer.Option("--dir", help="Thư mục YAML")] = DEFAULT_ATTACK_DIR,
+) -> None:
+    """Kiểm tra YAML (schema, level, dựng được bằng code hiện có); không cần DB."""
+    for entry in _load_attacks(directory):
+        spec = entry.spec
+        typer.echo(f"{entry.source}: {spec.name} v{spec.version} {spec.spec_sha256[:12]}… OK")
+
+
+@catalog_app.command("sync")
+def catalog_sync_command(
+    actor: ActorOpt,
+    directory: Annotated[Path, typer.Option("--dir", help="Thư mục YAML")] = DEFAULT_ATTACK_DIR,
+    deactivate_older: Annotated[
+        bool,
+        typer.Option("--deactivate-older", help="Tắt version cũ hơn khi thêm version mới"),
+    ] = False,
+) -> None:
+    """Thêm spec mới, cập nhật `display`; spec đã có không bao giờ bị sửa nội dung."""
+    entries = _load_attacks(directory)
+    with _transaction() as session:
+        admin = audit.require_admin(session, actor)
+        report = catalog_sync.sync_attack_specs(
+            session, entries, actor=admin, deactivate_older=deactivate_older
+        )
+    for title, items in (
+        ("Thêm mới", report.inserted),
+        ("Cập nhật display", report.display_updated),
+        ("Không đổi", report.unchanged),
+        ("Đã tắt", report.deactivated),
+    ):
+        typer.echo(f"{title} ({len(items)}): {', '.join(items) or '-'}")
+
+
+@app.command("import-config")
+def import_config(
+    directory: Annotated[
+        Path, typer.Argument(help="Thư mục có models/ và datasets/, ví dụ configs/")
+    ],
+    actor: ActorOpt,
+    store: Annotated[
+        Path, typer.Option("--store", help="Thư mục LocalStore trung gian")
+    ] = DEFAULT_STORE_DIR,
+) -> None:
+    """Đăng ký model và dataset khai trong YAML vào store (như `advertest model register`,
+    `dataset import-kitti`, `slice create`, `mapping create`), rồi chạy `import-local`."""
+    try:
+        models, datasets = load_config_tree(directory)
+        imported = apply_to_store(LocalStore(store), models, datasets)
+    except ConfigFileError as exc:
+        typer.echo(f"Lỗi: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    for card in imported.models:
+        gradients = "có gradient" if card.supports_gradients else "KHÔNG có gradient"
+        typer.echo(f"Model {card.name}: {card.id} ({gradients})")
+    for dataset in imported.datasets:
+        typer.echo(
+            f"Dataset {dataset.name}: {dataset.dataset_version_sha256[:12]}…,"
+            f" {len(dataset.slices)} slice, {len(dataset.mappings)} mapping"
+        )
+    with _transaction() as session:
+        admin = audit.require_admin(session, actor)
+        report = registry.import_local(
+            session,
+            LocalStore(store),
+            Buckets.from_client(make_s3_client()),
+            actor=admin,
+            dataset_names=imported.dataset_names(),
+        )
+    typer.echo(
+        f"Đã đăng ký: model {len(report.models)}, dataset {len(report.datasets)},"
+        f" mapping {len(report.mappings)}, slice {len(report.slices)};"
         f" ảnh mới upload: {report.images_uploaded}, đã có: {report.images_present}."
     )
 

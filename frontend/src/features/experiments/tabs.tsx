@@ -1,5 +1,5 @@
 import { Download, EyeOff, TriangleAlert } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 
 import { middleTruncate } from '@/admin/format'
 import { AttackRanking } from '@/components/charts/AttackRanking'
@@ -15,6 +15,14 @@ import type { ExperimentDetail, FailureCaseView, Manifest, RunView } from '@/con
 import { artifactSrc, useFailureCases, useManifest } from './api'
 import { BreakingPoints } from './BreakingPoints'
 import { downloadJson, formatDuration, reasonText, runLabel } from './format'
+import {
+  attackLabel,
+  casesHref,
+  levelText,
+  matchesFilter,
+  readCasesFilter,
+} from './insights/insights'
+import { WeaknessOverview } from './insights/WeaknessOverview'
 import { ProgressBar } from './ProgressBar'
 import { RunProgress } from './RunProgress'
 
@@ -72,12 +80,39 @@ export function ResultsTab({
   // nằm ở mục "Điểm gãy".
   const grid = gridAttackIds(experiment)
   const gridRuns = runs.filter((run) => grid.has(run.attack_spec_id))
+  const hasSearch = experiment.config.attacks.some((a) => a.mode === 'search')
+  const ranking = experiment.attack_ranking ?? []
   return (
     <div className="space-y-6">
-      <BreakingPoints experiment={experiment} runs={runs} />
-      <AttackRanking ranking={experiment.attack_ranking ?? []} />
+      <WeaknessOverview experiment={experiment} runs={runs} heatmapAttackIds={grid} />
+      {hasSearch && (
+        <div className="panel space-y-2 p-5">
+          <p className="text-sm">
+            Điểm gãy là mức nhiễu nhỏ nhất làm model vượt ngưỡng của protocol: giá trị càng nhỏ,
+            model càng dễ gãy trước attack đó.
+          </p>
+          <BreakingPoints experiment={experiment} runs={runs} />
+        </div>
+      )}
+      {ranking.length > 0 && (
+        <div className="panel p-5">
+          <AttackRanking
+            ranking={ranking}
+            caption="Cột càng dài, attack càng làm model sụt nhiều trên toàn dải mức nhiễu; attack đứng đầu là điểm yếu lớn nhất."
+          />
+        </div>
+      )}
       {grid.size > 0 && (
-        <MetricCurves runs={gridRuns} cleanMap50={experiment.clean_metrics?.map50 ?? null} />
+        <section aria-labelledby="duong-cong" className="panel space-y-3 p-5">
+          <h3 id="duong-cong" className="font-semibold">
+            Đường cong theo mức nhiễu
+          </h3>
+          <MetricCurves
+            runs={gridRuns}
+            cleanMap50={experiment.clean_metrics?.map50 ?? null}
+            caption="Mỗi khối là một attack: đường mAP@0.5 càng dốc xuống khi mức nhiễu tăng, model càng mất khả năng nhận diện; đường nét đứt là mAP trên ảnh sạch để so sánh."
+          />
+        </section>
       )}
     </div>
   )
@@ -147,19 +182,83 @@ function RunCases({ run }: { run: RunView }) {
   )
 }
 
+const CHIP =
+  'inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium ring-1 ring-line focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none'
+
+/** Lọc case theo attack (và level) từ URL: `?tab=cases&attack=<attack_spec_id>&level=4`. */
+function CaseFilter({
+  runs,
+  filter,
+}: {
+  runs: RunView[]
+  filter: { attack: string | null; level: number | null }
+}) {
+  const attacks = [...new Map(runs.map((run) => [run.attack_spec_id, run])).values()]
+  const levelRun =
+    filter.level === null ? undefined : runs.find((run) => matchesFilter(run, filter))
+  return (
+    <nav aria-label="Lọc failure case theo attack" className="flex flex-wrap items-center gap-2">
+      <Link
+        to="?tab=cases"
+        aria-current={filter.attack === null ? 'true' : undefined}
+        className={`${CHIP} ${filter.attack === null ? 'bg-navy text-white' : 'hover:bg-muted'}`}
+      >
+        Tất cả attack
+      </Link>
+      {attacks.map((run) => {
+        const active = filter.attack === run.attack_spec_id
+        return (
+          <Link
+            key={run.attack_spec_id}
+            to={casesHref(run.attack_spec_id)}
+            aria-current={active ? 'true' : undefined}
+            className={`${CHIP} ${active ? 'bg-navy text-white' : 'hover:bg-muted'}`}
+          >
+            {attackLabel(run.attack_spec.name)}
+          </Link>
+        )
+      })}
+      {filter.attack !== null && filter.level !== null && (
+        <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+          chỉ mức{' '}
+          {levelRun
+            ? levelText(
+                filter.level,
+                levelRun.attack_spec.param_name,
+                levelRun.attack_spec.param_unit,
+              )
+            : filter.level}
+          <Link to={casesHref(filter.attack)} className={`${CHIP} ml-1 hover:bg-muted`}>
+            Xem mọi mức
+          </Link>
+        </span>
+      )}
+    </nav>
+  )
+}
+
 export function FailureCasesTab({ runs }: { runs: RunView[] }) {
+  const [params] = useSearchParams()
+  const filter = readCasesFilter(params)
   const withCases = runs.filter((run) => run.failure_case_ids.length > 0)
   if (withCases.length === 0) {
     return <p className="text-muted-foreground">Chưa có failure case nào.</p>
   }
+  const shown = withCases.filter((run) => matchesFilter(run, filter))
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         {WATERMARK}: kết quả chưa được reviewer duyệt. Case sắp theo mức nghiêm trọng giảm dần.
       </p>
-      {withCases.map((run) => (
-        <RunCases key={run.run_id} run={run} />
-      ))}
+      <CaseFilter runs={withCases} filter={filter} />
+      {shown.length === 0 ? (
+        <p className="text-muted-foreground">
+          Không có ảnh hỏng nào được lưu cho lựa chọn này: model không làm mất object nào ở attack
+          và mức đã chọn, hoặc run chưa xong.
+        </p>
+      ) : (
+        shown.map((run) => <RunCases key={run.run_id} run={run} />)
+      )}
     </div>
   )
 }

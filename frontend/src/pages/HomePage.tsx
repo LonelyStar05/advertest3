@@ -10,6 +10,7 @@ import {
   FlaskConical,
   ListChecks,
   Plus,
+  ScanSearch,
   Send,
 } from 'lucide-react'
 import { Link } from 'react-router'
@@ -273,6 +274,12 @@ function TeamPulse({ experiments }: { experiments: ExperimentSummary[] }) {
 /** Thẻ tài nguyên: lối tắt tới những trang hay cần đọc lại. */
 function Resources() {
   const links = [
+    {
+      to: '/quick-try',
+      label: 'Thử nhanh một ảnh',
+      hint: 'Ảnh sạch và ảnh bị tấn công cạnh nhau',
+      icon: ScanSearch,
+    },
     {
       to: '/protocols',
       label: 'Protocol đang dùng',

@@ -1,0 +1,8 @@
+{
+  "model_version_id": "81686f0e-32b6-5806-819c-3b0e37072342",
+  "attack_name": "fgsm",
+  "level": 8.0,
+  "seed": 0,
+  "dataset_version_id": "6df1963b-f6d2-5b41-b98d-fd1527a7c91a",
+  "image_id": "000902"
+}

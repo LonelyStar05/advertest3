@@ -1,0 +1,263 @@
+{
+  "model_version_id": "81686f0e-32b6-5806-819c-3b0e37072342",
+  "model_name": "yolov8n-coco",
+  "attack_spec_id": "8d15422d-f111-5c7e-96eb-e704767e6218",
+  "attack_name": "fgsm",
+  "attack_version": 1,
+  "level": 8.0,
+  "unit": "1/255",
+  "seed": 0,
+  "source": "dataset",
+  "dataset_version_id": "6df1963b-f6d2-5b41-b98d-fd1527a7c91a",
+  "image_id": "000902",
+  "width": 1242,
+  "height": 375,
+  "clean_image": "data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoEAAIAAUAmJaQAA3AA/twQAAA=",
+  "attacked_image": "data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoEAAIAAUAmJaQAA3AA/twQAAA=",
+  "perturbation_image": "data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoEAAIAAUAmJaQAA3AA/twQAAA=",
+  "clean": [
+    {
+      "bbox": [
+        915.03,
+        129.26,
+        1161.84,
+        218.19
+      ],
+      "class_name": "bus",
+      "score": 0.852,
+      "matched": true
+    },
+    {
+      "bbox": [
+        327.15,
+        173.97,
+        358.42,
+        260.56
+      ],
+      "class_name": "person",
+      "score": 0.6812,
+      "matched": true
+    },
+    {
+      "bbox": [
+        613.05,
+        166.03,
+        705.67,
+        215.01
+      ],
+      "class_name": "car",
+      "score": 0.5958,
+      "matched": false
+    },
+    {
+      "bbox": [
+        1200.55,
+        240.27,
+        1241.66,
+        301.87
+      ],
+      "class_name": "bicycle",
+      "score": 0.4925,
+      "matched": true
+    },
+    {
+      "bbox": [
+        223.86,
+        180.19,
+        423.33,
+        253.63
+      ],
+      "class_name": "car",
+      "score": 0.4915,
+      "matched": false
+    },
+    {
+      "bbox": [
+        221.76,
+        183.02,
+        338.18,
+        250.54
+      ],
+      "class_name": "car",
+      "score": 0.3538,
+      "matched": false
+    },
+    {
+      "bbox": [
+        518.21,
+        176.86,
+        557.65,
+        197.38
+      ],
+      "class_name": "car",
+      "score": 0.3321,
+      "matched": true
+    }
+  ],
+  "attacked": [
+    {
+      "bbox": [
+        164.83,
+        190.64,
+        242.93,
+        217.87
+      ],
+      "class_name": "car",
+      "score": 0.5442,
+      "matched": false
+    },
+    {
+      "bbox": [
+        646.65,
+        166.74,
+        703.48,
+        211.4
+      ],
+      "class_name": "truck",
+      "score": 0.5388,
+      "matched": false
+    },
+    {
+      "bbox": [
+        330.75,
+        178.38,
+        370.29,
+        259.96
+      ],
+      "class_name": "person",
+      "score": 0.5176,
+      "matched": true
+    },
+    {
+      "bbox": [
+        519.75,
+        175.76,
+        560.51,
+        195.86
+      ],
+      "class_name": "car",
+      "score": 0.5082,
+      "matched": true
+    },
+    {
+      "bbox": [
+        363.87,
+        164.71,
+        398.05,
+        244.46
+      ],
+      "class_name": "person",
+      "score": 0.4884,
+      "matched": false
+    },
+    {
+      "bbox": [
+        614.32,
+        185.89,
+        649.45,
+        214.34
+      ],
+      "class_name": "car",
+      "score": 0.4731,
+      "matched": false
+    },
+    {
+      "bbox": [
+        903.99,
+        52.6,
+        1165.17,
+        218.25
+      ],
+      "class_name": "bus",
+      "score": 0.4382,
+      "matched": true
+    },
+    {
+      "bbox": [
+        1219.56,
+        128.12,
+        1241.42,
+        212.06
+      ],
+      "class_name": "person",
+      "score": 0.3644,
+      "matched": false
+    },
+    {
+      "bbox": [
+        517.21,
+        178.75,
+        552.85,
+        198.48
+      ],
+      "class_name": "car",
+      "score": 0.3474,
+      "matched": false
+    },
+    {
+      "bbox": [
+        1202.55,
+        192.97,
+        1241.68,
+        305.53
+      ],
+      "class_name": "bicycle",
+      "score": 0.3302,
+      "matched": true
+    },
+    {
+      "bbox": [
+        256.11,
+        163.73,
+        291.68,
+        207.26
+      ],
+      "class_name": "person",
+      "score": 0.262,
+      "matched": false
+    },
+    {
+      "bbox": [
+        271.76,
+        178.05,
+        332.33,
+        250.17
+      ],
+      "class_name": "person",
+      "score": 0.2549,
+      "matched": false
+    },
+    {
+      "bbox": [
+        310.28,
+        100.97,
+        350.92,
+        189.22
+      ],
+      "class_name": "person",
+      "score": 0.2512,
+      "matched": false
+    }
+  ],
+  "summary": {
+    "clean_count": 7,
+    "attacked_count": 13,
+    "missed_count": 3,
+    "new_count": 9,
+    "iou_threshold": 0.5
+  },
+  "operating_conf": 0.25,
+  "labels_source": "ground_truth",
+  "anonymization": {
+    "applied": true,
+    "method": "rule_v1",
+    "version": 1,
+    "regions_count": 25
+  },
+  "timing": {
+    "load_ms": 342.7,
+    "clean_ms": 1592.9,
+    "attack_ms": 10721.8,
+    "total_ms": 12886.5
+  }
+}

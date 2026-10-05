@@ -147,8 +147,12 @@ describe('form protocol', () => {
     expect(html).toMatch(/id="protocol-ten"[^>]*disabled=""|disabled=""[^>]*id="protocol-ten"/)
     expect(html).toContain('Không chấp nhận run chạy từ code chưa commit')
     expect(html).toContain('Ngưỡng và class lấy theo cấu hình tìm ngưỡng của attack.')
-    // Tên, mục đích, slice, số case; attack quét lưới 3 ô, tìm ngưỡng 9 ô; tiêu chí 6 + 3 ô.
-    expectLabelledControls(html.replace(/<input type="checkbox"[^>]*>/g, ''), 4 + 3 + 9 + 6 + 3)
+    // Tên, mục đích, slice, số case; attack chọn bằng thẻ, chế độ bằng nút, level quét lưới bằng chip
+    // (ô "Level khác" chỉ hiện khi bấm "Khác…") nên attack quét lưới 0 ô, tìm ngưỡng 7 ô; tiêu chí
+    // quét lưới 6 ô (level là ô chọn), tìm ngưỡng 3 ô. Mọi ô còn lại vẫn phải có nhãn.
+    expectLabelledControls(html.replace(/<input type="checkbox"[^>]*>/g, ''), 4 + 0 + 7 + 6 + 3)
+    expect(html).toContain('aria-label="Chế độ của fgsm"')
+    expect(html).toMatch(/aria-pressed="true"[^>]*>2</)
   })
 })
 
