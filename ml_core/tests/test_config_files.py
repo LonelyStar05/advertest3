@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -59,10 +60,16 @@ def _tree(tmp_path: Path) -> Path:
     return configs
 
 
-def test_example_configs_load() -> None:
-    models, datasets = load_config_tree(REPO / "configs")
+def test_example_configs_load(tmp_path: Path) -> None:
+    # Config mẫu của repo trỏ tới weights fixture (`make fixtures`) và `data/` (không commit).
+    # Chép sang thư mục tạm cùng bố cục, tạo sẵn hai đích đó để test không cần tải fixture.
+    shutil.copytree(REPO / "configs", tmp_path / "configs")
+    (tmp_path / "tests" / "fixtures").mkdir(parents=True)
+    (tmp_path / "tests" / "fixtures" / "yolov8n.pt").write_bytes(b"weights")
+    (tmp_path / "data" / "kitti-fixture").mkdir(parents=True)
+    models, datasets = load_config_tree(tmp_path / "configs")
     assert [m.file.name for m in models] == ["yolov8n-coco"]
-    assert models[0].weights == REPO / "tests" / "fixtures" / "yolov8n.pt"
+    assert models[0].weights == (tmp_path / "tests" / "fixtures" / "yolov8n.pt").resolve()
     assert [d.file.format for d in datasets] == ["kitti"]
     assert datasets[0].file.mappings[0].model == "yolov8n-coco"
 
