@@ -103,19 +103,24 @@ def test_max_drop_inconclusive_without_completed_run(
 
 
 def test_max_drop_uses_trigger_run_for_early_stop(flow: Flow) -> None:
-    """PGD L∞ sụp ở eps 2; eps 4 bị bỏ qua do dừng sớm → dùng đại lượng của run kích hoạt."""
-    levels = [2.0, 4.0, 8.0, 16.0, 32.0]
+    """PGD L∞ sụp ở eps 4; eps 8 bị bỏ qua do dừng sớm → dùng đại lượng của run kích hoạt.
+
+    Không dùng eps 2: trên fixture 5 ảnh, mAP@0.5 tấn công ở eps 2 còn ~6% mAP sạch (sát ngưỡng
+    sụp 5%, lệch theo phiên bản torch/ART), nên dừng sớm ở đó không ổn định giữa các máy.
+    """
+    levels = [4.0, 8.0, 16.0, 32.0]
     flow.api.profile(flow.target, sec=0.05, batch=5, attacks=["pgd_linf"])
     protocol_id = _protocol(
         flow,
         required_attacks=[required_grid("pgd_linf", levels)],
-        pass_criteria=[max_drop("pgd_linf", 4.0, threshold=1.0)],
+        pass_criteria=[max_drop("pgd_linf", 8.0, threshold=1.0)],
     )
     experiment_id = flow.experiment(
         attacks=[P5.attack("pgd_linf", levels)], protocol_id=protocol_id
     )
     runs = {r["level"]: r for r in runs_of(flow.owner, experiment_id)}
-    assert runs[4.0]["status"] == "skipped" and runs[4.0]["status_reason"]["code"] == "early_stop"
+    assert runs[4.0]["status"] == "completed"
+    assert runs[8.0]["status"] == "skipped" and runs[8.0]["status_reason"]["code"] == "early_stop"
     (result,) = _results(flow, experiment_id)
     assert result["status"] == "pass"
     assert "dừng sớm" in result["detail"]
