@@ -62,7 +62,6 @@ export function RequestAccessPage() {
         <TextField
           label="Họ tên"
           placeholder="Nguyễn Văn An"
-          autoFocus
           autoComplete="name"
           error={errors.full_name?.message}
           {...form.register('full_name')}

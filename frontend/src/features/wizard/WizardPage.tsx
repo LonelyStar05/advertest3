@@ -651,7 +651,7 @@ export function WizardPage() {
                 <QuickTemplates busy={quick?.id ?? null} onPick={startQuick} />
               )}
               {draft.step === 1 && cloneId === null && (
-                <h3 className="border-t border-line pt-4 font-semibold">Hoặc tự chọn protocol</h3>
+                <h3 className="border-t border-line pt-4 font-semibold">Hoặc tự chọn từng mục</h3>
               )}
               {draft.step === 1 && <ProtocolStep {...stepProps} />}
               {draft.step === 2 && <ModelStep {...stepProps} />}

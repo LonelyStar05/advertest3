@@ -485,13 +485,13 @@ export function AttackStep({
                 return (
                   <div
                     key={spec.id}
-                    className="space-y-3 rounded-xl border border-line bg-surface-solid p-4 shadow-[0_1px_2px_rgba(16,24,40,0.05)] has-[:checked]:border-navy has-[:checked]:shadow-[0_0_0_1px_var(--navy)]"
+                    className="space-y-3 rounded-lg border border-line bg-surface-solid p-4 shadow-[0_1px_2px_rgba(16,24,40,0.05)] has-[:checked]:border-navy has-[:checked]:shadow-[0_0_0_1px_var(--navy)]"
                   >
                     <label className="flex min-h-11 cursor-pointer items-center gap-3">
                       <input
                         type="checkbox"
                         className="size-5 accent-[var(--navy)]"
-                        aria-label={`${spec.name} v${spec.version}`}
+                        aria-label={`${spec.name} v${spec.version}${lock ? ` ${LOCK_LABEL}` : ''}`}
                         aria-describedby={ATTACK_PLAIN[spec.name] ? `mo-ta-${spec.id}` : undefined}
                         checked={chosen !== undefined}
                         disabled={lock !== undefined}

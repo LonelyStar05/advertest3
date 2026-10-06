@@ -38,10 +38,33 @@ async function createProtocolUi(page: Page, name: string, levels: [number, numbe
   await page.getByLabel('Số case bắt buộc review mỗi attack').fill('2')
   // Worker E2E chạy từ working tree của máy dev (có thể có thay đổi chưa commit).
   await page.getByLabel('Không chấp nhận run chạy từ code chưa commit').uncheck()
-  await page.locator('#attack-0-ten').selectOption('fgsm')
-  await page.locator('#attack-0-level').fill(levels.join(', '))
+  // Attack chọn bằng thẻ bật/tắt; level bằng chip (mức gợi ý) hoặc "Khác…" cho mức ngoài gợi ý.
+  // Form có thể mở sẵn một mẫu: chỉ giữ fgsm và đúng các level của test.
+  const fgsm = page.getByRole('button', { name: /^fgsm v1\b/ })
+  if ((await fgsm.getAttribute('aria-pressed')) !== 'true') await fgsm.click()
+  const pressed = page.locator('[aria-label="Attack bắt buộc"] button[aria-pressed="true"]')
+  for (const name of await pressed.allInnerTexts()) {
+    if (!name.startsWith('fgsm')) await pressed.filter({ hasText: name.split(' ')[0] }).click()
+  }
+  const chips = page
+    .getByRole('group', { name: 'Attack 1' })
+    .getByRole('group', { name: 'Level bắt buộc' })
+  const on = chips.locator('button[aria-pressed="true"]')
+  while ((await on.count()) > 0) await on.first().click()
+  for (const level of levels) {
+    const chip = chips.getByRole('button', { name: String(level), exact: true })
+    if ((await chip.count()) > 0) {
+      await chip.click()
+      continue
+    }
+    await chips.getByRole('button', { name: 'Khác…' }).click()
+    const input = page.getByLabel(/^Level khác/)
+    await input.fill(String(level))
+    await input.press('Enter')
+  }
+  await expect(on).toHaveText(levels.map(String))
   await page.locator('#tieu-chi-0-attack').selectOption('fgsm')
-  await page.locator('#tieu-chi-0-level').fill(String(levels[1]))
+  await page.locator('#tieu-chi-0-level').selectOption(String(levels[1]))
   await page.locator('#tieu-chi-0-nguong').fill('95')
   await expectNoHorizontalScroll(page)
   await page.locator('form').getByRole('button', { name: 'Tạo protocol' }).click()

@@ -48,7 +48,6 @@ export function ResetPasswordPage() {
         <TextField
           label="Mật khẩu mới"
           placeholder="Ít nhất 10 ký tự"
-          autoFocus
           type="password"
           autoComplete="new-password"
           hint="Ít nhất 10 ký tự, không trùng email."

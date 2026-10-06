@@ -52,7 +52,7 @@ export function nextStep(
           tone: 'warning',
           title: 'Protocol dev không vào được bước duyệt',
           body: 'Kết quả này chỉ để thử. Nhân bản experiment, chọn một protocol chính thức ở bước 1 rồi chạy lại để có kết luận được duyệt.',
-          primary: { label: 'Nhân bản với protocol khác', to: `/experiments/new?clone=${e.id}` },
+          primary: { label: 'Chạy lại với protocol khác', to: `/experiments/new?clone=${e.id}` },
           secondary: { label: 'Xem kết quả', to: '?tab=results' },
         }
       return {

@@ -625,6 +625,10 @@
   background-size: 160% 160%;
   animation: waves-pan 18s ease-in-out infinite alternate;
 }
+.waves:has(canvas[data-ready]) {
+  /* Canvas đã vẽ phủ lên: dừng hoạt ảnh nền dự phòng (background-position buộc vẽ lại cả vùng). */
+  animation: none;
+}
 .waves canvas {
   opacity: 0;
   transition: opacity 0.8s ease;
@@ -741,6 +745,14 @@
   to {
     stroke-dashoffset: 0;
   }
+}
+
+/* Cảnh tĩnh (main.tsx: giảm chuyển động hoặc trình duyệt tự động như Playwright): hoạt ảnh lặp
+   vô hạn chỉ chạy một vòng, không bắt trình duyệt vẽ lại liên tục. */
+:root[data-still] *,
+:root[data-still] ::before,
+:root[data-still] ::after {
+  animation-iteration-count: 1 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

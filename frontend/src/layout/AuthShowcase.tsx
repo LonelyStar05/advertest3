@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { stillScene } from '@/lib/motion'
+
 /**
  * Nửa phải của trang đăng nhập, nằm trên nền sóng của cả trang: ở giữa là một tấm thẻ minh họa viền mực
  * (phong cách beehiiv) kể đúng việc AdverTest làm: cùng một bức ảnh, model nhận ra ô tô; thêm nhiễu
@@ -12,7 +14,7 @@ export function AuthShowcase() {
   const [attacked, setAttacked] = useState(false)
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (stillScene()) return
     const id = window.setInterval(() => setAttacked((v) => !v), 2800)
     const stage = stageRef.current
     const card = cardRef.current

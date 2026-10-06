@@ -50,7 +50,6 @@ export function LoginPage() {
           label="Email"
           type="email"
           placeholder="ten@congty.vn"
-          autoFocus
           autoComplete="email"
           inputMode="email"
           error={errors.email?.message}

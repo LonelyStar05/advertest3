@@ -738,7 +738,7 @@ export function ProtocolEditor({
         <div className="grid grid-cols-2 gap-3">
           <TextField
             id="protocol-slice"
-            label="Slice tối thiểu (ảnh)"
+            label="Kích thước slice tối thiểu"
             placeholder="20"
             hint="Slice nhỏ hơn không gửi duyệt được."
             inputMode="numeric"
@@ -748,7 +748,7 @@ export function ProtocolEditor({
           />
           <TextField
             id="protocol-so-case"
-            label="Case review mỗi attack"
+            label="Số case bắt buộc review mỗi attack"
             placeholder="3"
             hint="Reviewer xem đủ mới chấp nhận được."
             inputMode="numeric"

@@ -150,7 +150,7 @@ export function LevelChips({
                 type="button"
                 variant="outline"
                 className="min-w-11 rounded-full tabular-nums"
-                aria-label={`Thêm level ${v}`}
+                aria-label={`Chọn nhanh mức ${v}`}
                 onClick={() => {
                   onChange(addLevel(levels, v))
                   report(null)

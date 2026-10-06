@@ -243,7 +243,8 @@ function Brand() {
 
 /**
  * Thẻ tình trạng máy chạy test ở cuối sidebar (giống thẻ gói dịch vụ của beehiiv): hệ thống có
- * ổn không, bao nhiêu experiment đang chạy, bấm vào xem tiến độ.
+ * ổn không, bao nhiêu experiment đang chạy. Chỉ hiển thị, không phải link: điều hướng chính
+ * giữ đúng các mục theo quyền.
  */
 function ComputeCard({ running }: { running: number }) {
   const health = useQuery({
@@ -253,10 +254,7 @@ function ComputeCard({ running }: { running: number }) {
   })
   const ok = health.data?.status === 'ok'
   return (
-    <Link
-      to={running > 0 ? '/experiments?status=running' : '/experiments'}
-      className="group relative hidden overflow-hidden rounded-xl border border-line bg-surface-solid p-3 transition-shadow hover:shadow-[0_8px_24px_rgba(16,24,40,0.08)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none xl:block"
-    >
+    <div className="relative hidden overflow-hidden rounded-xl border border-line bg-surface-solid p-3 xl:block">
       <span
         aria-hidden
         className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#ec4899]"
@@ -282,7 +280,7 @@ function ComputeCard({ running }: { running: number }) {
           style={{ width: running > 0 ? `${Math.min(100, 30 + running * 20)}%` : '8%' }}
         />
       </span>
-    </Link>
+    </div>
   )
 }
 

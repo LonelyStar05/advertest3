@@ -18,7 +18,7 @@ const CURRENT_RING: Record<LifecycleTone, string> = {
  */
 export function LifecycleStepper({ stages }: { stages: LifecycleStage[] }) {
   return (
-    <nav aria-label="Vòng đời experiment" className="panel overflow-x-auto px-3 py-2">
+    <nav aria-label="Vòng đời experiment" className="panel relative overflow-x-auto px-3 py-2">
       <ol className="flex min-w-[50rem] items-center gap-1" data-testid="vong-doi">
         {stages.map((stage, i) => {
           const done = stage.state === 'done'

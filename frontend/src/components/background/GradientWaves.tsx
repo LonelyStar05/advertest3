@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 
+import { softwareRenderer, stillScene } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 /**
@@ -179,7 +180,7 @@ export function GradientWaves({
     gl.uniform1f(uPastel, variant === 'flow' ? 1 : 0)
     canvas.dataset.ready = 'true'
 
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const reduce = stillScene() || softwareRenderer(gl)
     let raf = 0
     let visible = true
     const start = performance.now() - 18000

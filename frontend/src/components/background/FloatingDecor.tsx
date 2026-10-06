@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 
+import { stillScene } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 /**
@@ -49,7 +50,7 @@ export function FloatingDecor({ items, className }: { items: DecorItem[]; classN
   useEffect(() => {
     const root = rootRef.current
     if (!root) return
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const reduce = stillScene()
     const bodies: Body[] = items.flatMap((item, i) => {
       const el = nodes.current[i]
       const inner = inners.current[i]
