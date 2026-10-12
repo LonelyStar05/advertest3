@@ -21,7 +21,11 @@ export function BrandMark({ className }: { className?: string }) {
         stroke="#17181d"
         strokeWidth="56"
       />
-      <polygon points={GLYPH} fill="#17181d" transform="translate(626 583) scale(1.12) translate(-626 -621)" />
+      <polygon
+        points={GLYPH}
+        fill="#17181d"
+        transform="translate(626 583) scale(1.12) translate(-626 -621)"
+      />
     </svg>
   )
 }
