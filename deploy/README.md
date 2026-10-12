@@ -36,3 +36,19 @@ bash deploy/stop.sh --xoa    # dừng và xóa sạch dữ liệu
   Muốn làm lại từ đầu: `bash deploy/stop.sh --xoa`, xóa `.env`, rồi chạy lại `start.sh`.
 - **Experiment đứng ở "Đang chờ"**: xem log worker bằng lệnh mà `start.sh` in ra ở cuối. Lần chạy
   đầu, worker tự đo chi phí (calibration) nên chậm hơn.
+
+## Đưa lên cloud (VPS)
+
+Cần một VPS Ubuntu 22.04/24.04, tối thiểu 2 vCPU và 4 GB RAM (script tự thêm 4 GB swap).
+
+1. Chép dữ liệu mẫu lên VPS (từ máy có thư mục `data/`):
+   `ssh root@<IP> mkdir -p /opt/advertest3 && scp -r data root@<IP>:/opt/advertest3/`
+2. Đăng nhập VPS (`ssh root@<IP>`) rồi chạy:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/LonelyStar05/advertest3/main/deploy/cloud.sh | bash
+```
+
+Script cài Docker, clone repo vào `/opt/advertest3`, chạy `start.sh`, rồi dựng Caddy để có
+`https://<ip>.sslip.io` (không cần mua tên miền). Có tên miền riêng đã trỏ về IP của VPS thì thêm
+`DOMAIN=ten-mien-cua-ban` trước `bash`. Cập nhật bản mới: chạy lại đúng lệnh trên.
