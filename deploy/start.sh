@@ -43,6 +43,8 @@ WORKER_TOKEN=
 ENV
   chmod 600 "$ENV_FILE" 2>/dev/null || true
 fi
+# Bản chạy trên máy cá nhân: không chặn đăng nhập sai nhiều lần (cloud.sh bật lại).
+grep -q '^LOGIN_RATE_LIMIT=' "$ENV_FILE" || echo 'LOGIN_RATE_LIMIT=false' >>"$ENV_FILE"
 set -a; . "./$ENV_FILE"; set +a
 
 # 2. Commit của code (worker ghi vào mỗi run; cần mã 40 ký tự hex).

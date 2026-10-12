@@ -69,6 +69,7 @@ set_env() {
 }
 set_env COOKIE_SECURE true
 set_env APP_BASE_URL "https://$DOMAIN"
+set_env LOGIN_RATE_LIMIT true  # link công khai: giữ chặn dò mật khẩu
 say "Áp dụng cấu hình https cho API"
 docker compose -f docker/compose.yaml -f deploy/compose.local.yaml --env-file .env up -d --wait api frontend
 

@@ -7,6 +7,7 @@ nhưng tài khoản chưa `active` không ghi sự kiện (người dùng chốt
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta
 
 from sqlalchemy import func, select
@@ -35,7 +36,14 @@ def _failures(
     )
 
 
+def enabled() -> bool:
+    """Tắt được bằng LOGIN_RATE_LIMIT=false (chạy demo trên máy cá nhân); mặc định bật."""
+    return os.environ.get("LOGIN_RATE_LIMIT", "true").strip().lower() not in {"0", "false", "no"}
+
+
 def is_limited(session: Session, *, email: str, ip: str | None, now: datetime) -> bool:
+    if not enabled():
+        return False
     since = now - WINDOW
     if _failures(session, m.AuthEvent.email, email, since) >= MAX_FAILURES:
         return True
