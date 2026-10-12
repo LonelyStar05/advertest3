@@ -878,6 +878,20 @@
 :root[data-still] ::before,
 :root[data-still] ::after {
   animation-iteration-count: 1 !important;
+  /* Nút nảy, thẻ nhấc lên khi hover: không để phần tử đang di chuyển lúc test bấm. */
+  transition-duration: 0s !important;
+}
+/* Hiệu ứng chuyển trang và tab bật: mỗi lần điều hướng cả trang đang trượt, Playwright phải đợi
+   phần tử "ổn định" trước mỗi thao tác; trên máy CI chậm cộng dồn thành quá thời gian. */
+:root[data-still] .page-enter,
+:root[data-still] .page-enter *,
+:root[data-still] .page-wipe,
+:root[data-still] .wiggle-hover > svg,
+:root[data-still] [aria-selected='true'] {
+  animation: none !important;
+}
+:root[data-still] .page-wipe {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
