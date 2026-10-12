@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import logoUrl from '@/assets/logo.png'
 
-/** Logo AdverTest: chữ A dạng ống bóng 3D màu xanh cobalt. Ảnh trang trí, tên app nằm ngay cạnh. */
+/** Logo AdverTest: ký hiệu khối 3D màu xanh cobalt. Ảnh trang trí, tên app nằm ngay cạnh. */
 export function BrandMark({ className }: { className?: string }) {
   return (
     <img
