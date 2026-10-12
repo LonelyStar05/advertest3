@@ -248,7 +248,7 @@ function Brand() {
     <div className="flex min-h-16 items-center gap-2.5 px-2 max-xl:justify-center">
       <BrandMark className="size-9" />
       <span className="hidden min-w-0 leading-tight xl:block">
-        <span className="block truncate text-[15px] font-semibold tracking-[-0.02em]">
+        <span className="block truncate font-heading text-[16px] font-medium tracking-[-0.01em]">
           AdverTest
         </span>
         <span className="block truncate text-[12.5px] text-muted-foreground">
@@ -396,7 +396,7 @@ export function SideNav({
             to={create.path}
             aria-label={create.label}
             title={create.label}
-            className="wiggle-hover inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 text-[14px] font-semibold text-primary-foreground shadow-[0_0_0_1.5px_var(--ink-line),0_4px_0_var(--cobalt)] transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[0_0_0_1.5px_var(--ink-line),0_6px_0_var(--cobalt)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none active:translate-y-[3px] active:shadow-[0_0_0_1.5px_var(--ink-line),0_1px_0_var(--cobalt)]"
+            className="wiggle-hover inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 font-heading text-[14px] font-bold text-primary-foreground shadow-[0_0_0_1.5px_var(--ink-line),0_4px_0_var(--cobalt)] transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[0_0_0_1.5px_var(--ink-line),0_6px_0_var(--cobalt)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none active:translate-y-[3px] active:shadow-[0_0_0_1.5px_var(--ink-line),0_1px_0_var(--cobalt)]"
           >
             <Plus className="size-4 shrink-0" aria-hidden />
             <span className="hidden xl:inline">{create.label}</span>

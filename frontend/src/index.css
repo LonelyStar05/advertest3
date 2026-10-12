@@ -2,6 +2,7 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/inter';
+@import '@fontsource/be-vietnam-pro/500.css';
 @import '@fontsource/be-vietnam-pro/600.css';
 @import '@fontsource/be-vietnam-pro/700.css';
 @import '@fontsource/be-vietnam-pro/800.css';
@@ -220,11 +221,7 @@
   h2,
   h3 {
     font-family: 'Be Vietnam Pro', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-    letter-spacing: -0.03em;
     text-wrap: balance;
-  }
-  h1 {
-    font-weight: 800;
   }
   p {
     text-wrap: pretty;
@@ -425,6 +422,7 @@
   }
 
   .kicker {
+    font-family: var(--font-heading);
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.14em;
@@ -434,6 +432,7 @@
 
   /* Eyebrow dạng viên thuốc có chấm phát sáng (homepage-v2 Eyebrow). */
   .eyebrow {
+    font-family: var(--font-heading);
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -889,4 +888,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/*
+ * Thang chữ theo Slush: tiêu đề Medium 500, khoảng cách chữ -0.01em; h1 sát dòng.
+ * Đặt ngoài @layer để thắng các tiện ích font-semibold/tracking-* rải trong component.
+ * Aeonik Pro (bản quyền) được thay bằng Be Vietnam Pro vì cần đủ dấu tiếng Việt.
+ */
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+h1 {
+  line-height: 1.05;
 }
