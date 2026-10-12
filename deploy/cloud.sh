@@ -35,8 +35,11 @@ if [ -d "$APP_DIR/.git" ]; then
   say "Cập nhật code"
   git -C "$APP_DIR" pull --ff-only
 else
+  # Thư mục có thể đã tồn tại vì vừa scp data/ lên trước: clone vào chỗ trống rồi chuyển sang.
   say "Tải code về $APP_DIR"
-  git clone "$REPO_URL" "$APP_DIR"
+  mkdir -p "$APP_DIR"
+  git clone "$REPO_URL" "$APP_DIR.tmp"
+  cp -a "$APP_DIR.tmp/." "$APP_DIR/" && rm -rf "$APP_DIR.tmp"
 fi
 cd "$APP_DIR"
 
