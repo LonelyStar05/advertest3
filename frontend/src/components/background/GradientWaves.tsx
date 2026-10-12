@@ -4,7 +4,7 @@ import { softwareRenderer, stillScene } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 /**
- * Cảnh 3D "lụa" chuyển màu xanh → tím → hồng (tham khảo beehiiv): một trường độ cao được uốn bằng
+ * Cảnh 3D "ống cao su" tông xanh cobalt (tham khảo Slush): một trường độ cao được uốn bằng
  * nhiễu simplex, chiếu sáng giả bằng pháp tuyến tính từ đạo hàm nên các dải màu có khối, có vệt
  * bóng. Chạy bằng WebGL trên một canvas, chỉ tự trôi theo thời gian (không theo chuột). Không có WebGL
  * thì nền CSS gradient phía dưới vẫn hiện. `prefers-reduced-motion`: vẽ một khung hình rồi dừng.
@@ -79,11 +79,12 @@ float height(vec2 p, float t){
 }
 
 vec3 ramp(float x){
-  // Lụa: xanh → tím → hồng → đào. Sóng (uPastel = 1): xanh oải hương → hồng phấn như ảnh mẫu.
-  vec3 c0 = mix(vec3(0.145, 0.388, 0.922), vec3(0.33, 0.40, 0.90), uPastel);
-  vec3 c1 = mix(vec3(0.486, 0.227, 0.929), vec3(0.56, 0.53, 0.93), uPastel);
-  vec3 c2 = mix(vec3(0.925, 0.282, 0.600), vec3(0.87, 0.55, 0.82), uPastel);
-  vec3 c3 = mix(vec3(0.984, 0.749, 0.627), vec3(0.96, 0.80, 0.91), uPastel);
+  // Ống cao su xanh (tham khảo Slush): cobalt đậm → cobalt → xanh trời → băng.
+  // uPastel = 1 (nền ứng dụng): cùng sắc nhưng nhạt để không cản đọc.
+  vec3 c0 = mix(vec3(0.075, 0.235, 0.80), vec3(0.42, 0.60, 1.00), uPastel);
+  vec3 c1 = mix(vec3(0.184, 0.357, 1.00), vec3(0.60, 0.75, 1.00), uPastel);
+  vec3 c2 = mix(vec3(0.42, 0.66, 1.00), vec3(0.79, 0.87, 1.00), uPastel);
+  vec3 c3 = mix(vec3(0.84, 0.92, 1.00), vec3(0.93, 0.96, 1.00), uPastel);
   x = clamp(x, 0.0, 1.0);
   if (x < 0.36) return mix(c0, c1, smoothstep(0.0, 0.36, x));
   if (x < 0.72) return mix(c1, c2, smoothstep(0.36, 0.72, x));
@@ -251,24 +252,13 @@ export function GradientWaves({
   )
 }
 
-/** Lưới lục giác mảnh phủ lên cảnh (tham khảo họa tiết beehiiv), mờ dần ra mép. */
+/** Lưới chấm in phủ lên cảnh như giấy kẻ chấm, mờ dần ra mép. */
 function HexPattern() {
   return (
     <svg className="waves-hex absolute inset-0 size-full">
       <defs>
-        <pattern
-          id="hex-grid"
-          width="56"
-          height="97"
-          patternUnits="userSpaceOnUse"
-          patternTransform="scale(1.1)"
-        >
-          <path
-            d="M28 0 L56 16.2 L56 48.5 L28 64.7 L0 48.5 L0 16.2 Z M28 64.7 L28 97"
-            fill="none"
-            stroke="white"
-            strokeWidth="1"
-          />
+        <pattern id="hex-grid" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="11" cy="11" r="1.6" fill="white" />
         </pattern>
         <radialGradient id="hex-fade" cx="70%" cy="40%" r="75%">
           <stop offset="0" stopColor="white" stopOpacity="0.9" />

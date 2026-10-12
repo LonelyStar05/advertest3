@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils'
 import { EXPERIMENT_TEMPLATES, type ExperimentTemplate } from './quick'
 
 const LOOK: Record<ExperimentTemplate['id'], { icon: typeof Rocket; tile: string }> = {
-  fast: { icon: Rocket, tile: '[--tile-bg:#fce7f3] [--tile-fg:#be185d]' },
+  fast: { icon: Rocket, tile: '[--tile-bg:#ffe7dd] [--tile-fg:#c23d12]' },
   probe: { icon: Gauge, tile: '[--tile-bg:#e0f2fe] [--tile-fg:#0369a1]' },
-  full: { icon: Layers, tile: '[--tile-bg:#f5f3ff] [--tile-fg:#6d28d9]' },
+  full: { icon: Layers, tile: '[--tile-bg:#ece6ff] [--tile-fg:#4b3ad6]' },
 }
 
 /** Hàng thẻ "Mẫu experiment" ở bước 1: bấm một thẻ điền sẵn mọi bước. */

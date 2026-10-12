@@ -16,7 +16,7 @@ export function ProgressBar({ progress, label }: { progress: Progress; label?: s
         className="h-1.5 min-w-16 flex-1 overflow-hidden rounded-full bg-secondary"
       >
         <div
-          className={`h-full rounded-full bg-gradient-to-r from-detect to-approved ${percent > 0 && percent < 100 ? 'shimmer' : ''}`}
+          className={`h-full rounded-full bg-[var(--cobalt)] ${percent > 0 && percent < 100 ? 'shimmer' : ''}`}
           style={{ width: `${percent}%` }}
         />
       </div>

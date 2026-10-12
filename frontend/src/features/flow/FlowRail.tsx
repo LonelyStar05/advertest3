@@ -24,7 +24,7 @@ export function FlowRail({
     <section aria-labelledby="tieu-de-quy-trinh" className="panel flex flex-col gap-4 p-5">
       <div className="flex flex-col gap-1">
         <h2 id="tieu-de-quy-trinh" className="text-[16px] font-semibold">
-          Quy trình của nhóm 🚀
+          Quy trình của nhóm
         </h2>
         <p className="text-[13.5px] leading-5 text-muted-foreground">
           Kết luận chỉ chính thức sau khi một reviewer độc lập duyệt.
@@ -40,7 +40,7 @@ export function FlowRail({
           aria-valuenow={step}
         >
           <div
-            className="h-full rounded-full bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#ec4899] transition-[width] duration-700"
+            className="h-full rounded-full stripe-bar transition-[width] duration-700"
             style={{ width: `${(step / stages.length) * 100}%` }}
           />
         </div>
@@ -88,7 +88,7 @@ function Stage({ stage, passed, mine }: { stage: StageView; passed: boolean; min
         <span className="flex items-center gap-2">
           <span className="truncate text-[14px] font-medium">{stage.title}</span>
           {mine && (
-            <span className="rounded-full bg-pink-soft px-1.5 text-[11px] font-semibold text-[#be185d] dark:text-pink">
+            <span className="rounded-full bg-pink-soft px-1.5 text-[11px] font-semibold text-[#c23d12] dark:text-pink">
               Bạn
             </span>
           )}
@@ -96,7 +96,7 @@ function Stage({ stage, passed, mine }: { stage: StageView; passed: boolean; min
         <span
           className={cn(
             'truncate text-[12.5px]',
-            action ? 'font-medium text-[#be185d] dark:text-pink' : 'text-muted-foreground',
+            action ? 'font-medium text-[#c23d12] dark:text-pink' : 'text-muted-foreground',
           )}
         >
           {OWNER_LABEL[stage.owner]} · {stage.status}

@@ -36,10 +36,7 @@ export function LoginPage() {
   const showError =
     login.isError && !(login.error instanceof ApiError && isAccountStatusCode(login.error.code))
   return (
-    <PublicLayout
-      title="Đăng nhập"
-      lead="Chào mừng trở lại 👋 Tiếp tục kiểm định model của nhóm bạn."
-    >
+    <PublicLayout title="Đăng nhập" lead="Đăng nhập để xem experiment và những việc đang chờ bạn.">
       <form
         noValidate
         className="flex flex-col gap-4"

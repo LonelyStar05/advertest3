@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils'
  * Thuần trang trí: aria-hidden, không vào thứ tự Tab.
  */
 
-export type DecorKind = 'cube' | 'star' | 'sparkle' | 'ring' | 'hex' | 'target' | 'pixel'
+export type DecorKind =
+  'cube' | 'star' | 'sparkle' | 'ring' | 'hex' | 'target' | 'pixel' | 'cone' | 'smiley'
 
 export interface DecorItem {
   kind: DecorKind
@@ -216,7 +217,7 @@ export function FloatingDecor({ items, className }: { items: DecorItem[]; classN
   )
 }
 
-const INK = '#0f172a'
+const INK = '#17181d'
 
 function Shape({ item, size }: { item: DecorItem; size: number }) {
   switch (item.kind) {
@@ -224,8 +225,8 @@ function Shape({ item, size }: { item: DecorItem; size: number }) {
     case 'pixel': {
       const colors =
         item.kind === 'pixel'
-          ? ['#ffffff', '#fbcfe8', '#ddd6fe', '#ffffff', '#bfdbfe', '#fbcfe8']
-          : ['#f9a8d4', '#c4b5fd', '#93c5fd', '#f9a8d4', '#c4b5fd', '#fde68a']
+          ? ['#ffffff', '#ffcb2e', '#c9b6ff', '#ffffff', '#b9d6ff', '#ffe7dd']
+          : ['#2f5bff', '#ffcb2e', '#ff5b2e', '#2f5bff', '#c9b6ff', '#ffcb2e']
       const h = size / 2
       const faces = [
         `rotateY(0deg) translateZ(${h}px)`,
@@ -256,9 +257,7 @@ function Shape({ item, size }: { item: DecorItem; size: number }) {
         <div
           className="size-full rounded-full"
           style={{
-            border: `${Math.round(size * 0.16)}px solid transparent`,
-            background:
-              'linear-gradient(#0000,#0000) padding-box, linear-gradient(135deg,#60a5fa,#a78bfa,#f472b6) border-box',
+            border: `${Math.round(size * 0.16)}px solid ${item.color ?? '#ff5b2e'}`,
             boxShadow: `0 0 0 2px ${INK}, inset 0 0 0 2px ${INK}`,
           }}
         />
@@ -273,7 +272,7 @@ function Shape({ item, size }: { item: DecorItem; size: number }) {
         <svg viewBox="0 0 100 100" className="size-full overflow-visible">
           <polygon
             points={pts}
-            fill={item.color ?? '#fde68a'}
+            fill={item.color ?? '#ffcb2e'}
             stroke={INK}
             strokeWidth="3.5"
             strokeLinejoin="round"
@@ -299,7 +298,7 @@ function Shape({ item, size }: { item: DecorItem; size: number }) {
           <path d="M56 8l38 22v44L56 96 18 74V30z" fill={INK} />
           <path
             d="M50 4l38 22v44L50 92 12 70V26z"
-            fill={item.color ?? '#ddd6fe'}
+            fill={item.color ?? '#c9b6ff'}
             stroke={INK}
             strokeWidth="3.5"
             strokeLinejoin="round"
@@ -313,12 +312,60 @@ function Shape({ item, size }: { item: DecorItem; size: number }) {
           />
         </svg>
       )
+    case 'cone':
+      // Cọc tiêu giao thông: vật quen thuộc trên đường thử xe.
+      return (
+        <svg viewBox="0 0 100 100" className="size-full overflow-visible">
+          <path d="M14 88h72l4 8H10z" fill={INK} />
+          <path
+            d="M12 84h76v8H12z"
+            fill={item.color ?? '#ff5b2e'}
+            stroke={INK}
+            strokeWidth="3.5"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M42 8h16l22 76H20z"
+            fill={item.color ?? '#ff5b2e'}
+            stroke={INK}
+            strokeWidth="3.5"
+            strokeLinejoin="round"
+          />
+          <path d="M36 30h28l4 14H32zM28 56h44l4 14H24z" fill="#fff" stroke={INK} strokeWidth="3" />
+        </svg>
+      )
+    case 'smiley':
+      // Đồng xu mặt cười như miếng dán: mắt tròn, má hồng, nét mực dày.
+      return (
+        <svg viewBox="0 0 100 100" className="size-full overflow-visible">
+          <ellipse cx="54" cy="56" rx="44" ry="42" fill={INK} />
+          <circle
+            cx="48"
+            cy="50"
+            r="44"
+            fill={item.color ?? '#ffcb2e'}
+            stroke={INK}
+            strokeWidth="4"
+          />
+          <circle cx="35" cy="42" r="9" fill="#fff" stroke={INK} strokeWidth="3.5" />
+          <circle cx="61" cy="42" r="9" fill="#fff" stroke={INK} strokeWidth="3.5" />
+          <circle cx="37" cy="44" r="4" fill={INK} />
+          <circle cx="63" cy="44" r="4" fill={INK} />
+          <path
+            d="M33 64q15 13 30 0"
+            fill="none"
+            stroke={INK}
+            strokeWidth="4.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      )
     case 'target':
       return (
         <svg viewBox="0 0 100 100" className="size-full overflow-visible">
           <circle cx="50" cy="50" r="46" fill="#fff" stroke={INK} strokeWidth="4" />
-          <path d="M50 50V4A46 46 0 0 1 96 50z" fill={item.color ?? '#7c3aed'} />
-          <path d="M50 50V96A46 46 0 0 1 4 50z" fill={item.color ?? '#7c3aed'} />
+          <path d="M50 50V4A46 46 0 0 1 96 50z" fill={item.color ?? '#2f5bff'} />
+          <path d="M50 50V96A46 46 0 0 1 4 50z" fill={item.color ?? '#2f5bff'} />
           <circle cx="50" cy="50" r="46" fill="none" stroke={INK} strokeWidth="4" />
         </svg>
       )

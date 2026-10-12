@@ -55,7 +55,7 @@ export function AuthShowcase() {
           <div className="ink-card relative overflow-hidden p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <span className="flex size-8 items-center justify-center rounded-lg border-2 border-[#0f172a] bg-[#fde68a] text-[13px] font-black">
+                <span className="flex size-8 items-center justify-center rounded-lg border-2 border-[#17181d] bg-[#ffcb2e] text-[13px] font-black">
                   AT
                 </span>
                 <div className="leading-tight">
@@ -66,7 +66,7 @@ export function AuthShowcase() {
               <Toggle on={attacked} />
             </div>
 
-            <div className="relative mt-3 overflow-hidden rounded-xl border-2 border-[#0f172a]">
+            <div className="relative mt-3 overflow-hidden rounded-xl border-2 border-[#17181d]">
               <RoadScene attacked={attacked} />
             </div>
 
@@ -77,7 +77,7 @@ export function AuthShowcase() {
               <Connector />
               <Step done={!attacked} label="Đo" />
               <Connector />
-              <span className="flex size-9 items-center justify-center rounded-full border-2 border-[#0f172a] bg-[#ec4899] text-white shadow-[2px_2px_0_#0f172a]">
+              <span className="flex size-9 items-center justify-center rounded-full border-2 border-[#17181d] bg-[#ff5b2e] text-white shadow-[2px_2px_0_#17181d]">
                 <svg
                   viewBox="0 0 24 24"
                   className="size-[18px]"
@@ -117,7 +117,7 @@ export function AuthShowcase() {
                 <path
                   className="draw"
                   d="M4 12 C 60 2, 120 16, 180 8 S 270 6, 296 10"
-                  stroke="#ec4899"
+                  stroke="#ff5b2e"
                   strokeWidth="4"
                   strokeLinecap="round"
                 />
@@ -139,10 +139,10 @@ function Toggle({ on }: { on: boolean }) {
     <span className="flex items-center gap-2 text-[11.5px] font-bold">
       <span className={on ? 'text-[#475569]' : ''}>Gốc</span>
       <span
-        className={`relative h-6 w-11 rounded-full border-2 border-[#0f172a] transition-colors duration-300 ${on ? 'bg-[#ec4899]' : 'bg-[#e2e8f0]'}`}
+        className={`relative h-6 w-11 rounded-full border-2 border-[#17181d] transition-colors duration-300 ${on ? 'bg-[#ff5b2e]' : 'bg-[#e2e8f0]'}`}
       >
         <span
-          className={`absolute top-0.5 size-4 rounded-full border-2 border-[#0f172a] bg-white transition-[left] duration-300 ${on ? 'left-[22px]' : 'left-0.5'}`}
+          className={`absolute top-0.5 size-4 rounded-full border-2 border-[#17181d] bg-white transition-[left] duration-300 ${on ? 'left-[22px]' : 'left-0.5'}`}
         />
       </span>
       <span className={on ? '' : 'text-[#475569]'}>Nhiễu</span>
@@ -154,7 +154,7 @@ function Step({ done, label }: { done: boolean; label: string }) {
   return (
     <span className="flex flex-col items-center gap-1">
       <span
-        className={`flex size-7 items-center justify-center rounded-full border-2 border-[#0f172a] text-[12px] font-black transition-colors duration-300 ${done ? 'bg-[#0f172a] text-white' : 'bg-white text-[#0f172a]'}`}
+        className={`flex size-7 items-center justify-center rounded-full border-2 border-[#17181d] text-[12px] font-black transition-colors duration-300 ${done ? 'bg-[#17181d] text-white' : 'bg-white text-[#17181d]'}`}
       >
         {done ? '✓' : '…'}
       </span>
@@ -164,7 +164,7 @@ function Step({ done, label }: { done: boolean; label: string }) {
 }
 
 function Connector() {
-  return <span className="mb-5 h-0.5 flex-1 rounded-full bg-[#0f172a]" />
+  return <span className="mb-5 h-0.5 flex-1 rounded-full bg-[#17181d]" />
 }
 
 /** Cảnh đường đêm vẽ bằng SVG; bật "nhiễu" thì phủ hạt nhiễu và khung bỏ sót màu đỏ. */
@@ -174,11 +174,11 @@ function RoadScene({ attacked }: { attacked: boolean }) {
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#312e81" />
-          <stop offset="1" stopColor="#7c3aed" />
+          <stop offset="1" stopColor="#4b3ad6" />
         </linearGradient>
         <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#334155" />
-          <stop offset="1" stopColor="#0f172a" />
+          <stop offset="1" stopColor="#17181d" />
         </linearGradient>
         <filter id="noise">
           <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4" />
@@ -186,28 +186,28 @@ function RoadScene({ attacked }: { attacked: boolean }) {
         </filter>
       </defs>
       <rect width="400" height="240" fill="url(#sky)" />
-      <circle cx="320" cy="48" r="16" fill="#fde68a" opacity="0.9" />
+      <circle cx="320" cy="48" r="16" fill="#ffcb2e" opacity="0.9" />
       <path
         d="M0 140 L70 96 L130 128 L210 82 L290 126 L340 104 L400 132 L400 150 L0 150Z"
         fill="#4c1d95"
       />
-      <path d="M0 150 H400 V240 H0Z" fill="#1e1b4b" />
+      <path d="M0 150 H400 V240 H0Z" fill="#0a2170" />
       <path d="M150 150 L250 150 L400 240 L0 240Z" fill="url(#road)" />
-      <path d="M200 156 V170 M200 182 V200 M200 214 V240" stroke="#ec4899" strokeWidth="4" />
+      <path d="M200 156 V170 M200 182 V200 M200 214 V240" stroke="#ff5b2e" strokeWidth="4" />
       {/* Ô tô */}
       <g transform="translate(226 160)">
         <rect x="0" y="16" width="96" height="30" rx="8" fill="#f1f5f9" />
         <path d="M14 18 L30 0 H70 L84 18Z" fill="#cbd5e1" />
         <rect x="34" y="4" width="16" height="12" rx="2" fill="#475569" />
         <rect x="54" y="4" width="16" height="12" rx="2" fill="#475569" />
-        <circle cx="22" cy="46" r="9" fill="#0f172a" />
-        <circle cx="74" cy="46" r="9" fill="#0f172a" />
-        <rect x="88" y="24" width="8" height="6" rx="2" fill="#fde68a" />
+        <circle cx="22" cy="46" r="9" fill="#17181d" />
+        <circle cx="74" cy="46" r="9" fill="#17181d" />
+        <rect x="88" y="24" width="8" height="6" rx="2" fill="#ffcb2e" />
       </g>
       {/* Biển báo */}
       <g transform="translate(70 120)">
         <rect x="8" y="22" width="4" height="50" fill="#94a3b8" />
-        <path d="M10 0 L24 24 H-4Z" fill="#f59e0b" stroke="#0f172a" strokeWidth="2" />
+        <path d="M10 0 L24 24 H-4Z" fill="#f59e0b" stroke="#17181d" strokeWidth="2" />
       </g>
 
       <g style={{ transition: 'opacity .35s ease', opacity: attacked ? 1 : 0 }}>
@@ -282,8 +282,8 @@ function Starburst({ className }: { className?: string }) {
     <svg viewBox="0 0 100 100" className={className}>
       <polygon
         points={points}
-        fill="#fde68a"
-        stroke="#0f172a"
+        fill="#ffcb2e"
+        stroke="#17181d"
         strokeWidth="3"
         strokeLinejoin="round"
       />
@@ -293,7 +293,7 @@ function Starburst({ className }: { className?: string }) {
         textAnchor="middle"
         fontSize="20"
         fontWeight="900"
-        fill="#0f172a"
+        fill="#17181d"
         fontFamily="Inter Variable, sans-serif"
       >
         PGD
@@ -304,13 +304,13 @@ function Starburst({ className }: { className?: string }) {
 
 function Sparkle({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className}>
+    <svg viewBox="0 0 24 24" className={className} fill="none">
+      {/* Nét "bật" vẽ tay như trong truyện tranh, thay cho ngôi sao lấp lánh. */}
       <path
-        d="M12 1 C13 8 16 11 23 12 C16 13 13 16 12 23 C11 16 8 13 1 12 C8 11 11 8 12 1Z"
-        fill="#fff"
-        stroke="#0f172a"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
+        d="M12 2.5v5.5M4.2 6.6l4 3.6M19.8 6.6l-4 3.6M2.5 14.5h5M16.5 14.5h5"
+        stroke="#17181d"
+        strokeWidth="2.6"
+        strokeLinecap="round"
       />
     </svg>
   )

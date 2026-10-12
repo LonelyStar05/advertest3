@@ -8,16 +8,21 @@ export function BrandMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" aria-hidden className={cn('shrink-0', className)}>
       <defs>
-        <linearGradient id="brand-g" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#2563eb" />
-          <stop offset="0.55" stopColor="#7c3aed" />
-          <stop offset="1" stopColor="#ec4899" />
-        </linearGradient>
         <clipPath id="brand-c">
           <circle cx="32" cy="32" r="17.5" />
         </clipPath>
       </defs>
-      <rect width="64" height="64" rx="16" fill="url(#brand-g)" />
+      <rect x="2" y="5" width="60" height="58" rx="15" fill="#17181d" />
+      <rect
+        x="2"
+        y="1.5"
+        width="60"
+        height="58"
+        rx="15"
+        fill="#2f5bff"
+        stroke="#17181d"
+        strokeWidth="3"
+      />
       <path
         d="M10 20v-10h10M44 10h10v10M54 44v10h-10M20 54h-10v-10"
         fill="none"

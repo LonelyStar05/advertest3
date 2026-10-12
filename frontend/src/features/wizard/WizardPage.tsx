@@ -99,9 +99,7 @@ function StepBar({
               key={step}
               className={cn(
                 'h-1 flex-1 rounded-full',
-                step <= draft.step
-                  ? 'bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#ec4899] bg-fixed'
-                  : 'bg-secondary',
+                step <= draft.step ? 'stripe-bar' : 'bg-secondary',
               )}
             />
           ))}
@@ -144,7 +142,7 @@ function StepBar({
                   aria-hidden
                   className={cn(
                     'h-0.5 min-w-3 flex-1 rounded-full',
-                    done ? 'bg-gradient-to-r from-[#2563eb] to-[#7c3aed]' : 'bg-line',
+                    done ? 'bg-[var(--cobalt)]' : 'bg-line',
                   )}
                 />
               )}
@@ -606,7 +604,7 @@ export function WizardPage() {
         <GradientWaves className="absolute inset-0 -z-10" scale={0.7} />
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-gradient-to-r from-[#1e1b4b]/80 via-[#1e1b4b]/40 to-transparent"
+          className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0a2170]/80 via-[#0a2170]/40 to-transparent"
         />
         <FloatingDecor items={WIZARD_DECOR} className="hidden md:block" />
         <h1 className="text-[clamp(1.85rem,2.6vw,2.5rem)] leading-[1.1] font-bold tracking-[-0.035em]">
@@ -635,7 +633,7 @@ export function WizardPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
         <section aria-labelledby="tieu-de-buoc" className="panel min-w-0 space-y-5 p-5 md:p-6">
           <div className="flex flex-col gap-1.5 border-b border-line pb-4">
-            <p className="self-start rounded-full bg-violet-soft px-2.5 py-0.5 text-[12.5px] font-semibold text-[#6d28d9] dark:text-violet">
+            <p className="self-start rounded-full bg-violet-soft px-2.5 py-0.5 text-[12.5px] font-semibold text-[#4b3ad6] dark:text-violet">
               Bước {draft.step} trên 6
             </p>
             <h2 id="tieu-de-buoc" className="text-xl font-semibold">
@@ -723,10 +721,7 @@ export function WizardPage() {
         </section>
         <aside className="hidden lg:block" aria-label="Tóm tắt cấu hình">
           <div className="panel sticky top-6 overflow-hidden p-5 pt-6">
-            <span
-              aria-hidden
-              className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#ec4899]"
-            />
+            <span aria-hidden className="absolute inset-x-0 top-0 h-1 stripe-bar" />
             <h2 className="font-semibold">Bạn đang cấu hình</h2>
             <p className="mb-2 text-sm text-muted-foreground">
               Cập nhật theo từng lựa chọn. Chưa có gì được chạy cho tới khi bạn bấm "Chạy

@@ -46,7 +46,7 @@ const CRITERION_KIND_LABEL = {
 } as const
 
 const TEMPLATE_TILE: Record<ProtocolTemplate['id'], string> = {
-  quick: '[--tile-bg:#fce7f3] [--tile-fg:#be185d]',
+  quick: '[--tile-bg:#ffe7dd] [--tile-fg:#c23d12]',
   safety: '[--tile-bg:#dcfce7] [--tile-fg:#15803d]',
   weather: '[--tile-bg:#e0f2fe] [--tile-fg:#0369a1]',
 }

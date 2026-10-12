@@ -6,11 +6,11 @@ import type { ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
 
-const INK = '#0f172a'
+const INK = '#17181d'
 
 function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn('ink-card relative bg-white p-4 text-[#0f172a]', className)}>{children}</div>
+    <div className={cn('ink-card relative bg-white p-4 text-[#17181d]', className)}>{children}</div>
   )
 }
 
@@ -20,7 +20,7 @@ function Lines({ widths }: { widths: string[] }) {
       {widths.map((w, i) => (
         <span
           key={i}
-          className={cn('h-2 rounded-full', i === 0 ? 'bg-[#0f172a]' : 'bg-[#cbd5e1]')}
+          className={cn('h-2 rounded-full', i === 0 ? 'bg-[#17181d]' : 'bg-[#cbd5e1]')}
           style={{ width: w }}
         />
       ))}
@@ -28,7 +28,7 @@ function Lines({ widths }: { widths: string[] }) {
   )
 }
 
-export function Squiggle({ className, color = '#7c3aed' }: { className?: string; color?: string }) {
+export function Squiggle({ className, color = '#4b3ad6' }: { className?: string; color?: string }) {
   return (
     <svg viewBox="0 0 80 60" className={className} fill="none">
       <path
@@ -41,15 +41,15 @@ export function Squiggle({ className, color = '#7c3aed' }: { className?: string;
   )
 }
 
-export function Sparkle({ className, fill = '#fff' }: { className?: string; fill?: string }) {
+export function Sparkle({ className }: { className?: string; fill?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className}>
+    <svg viewBox="0 0 24 24" className={className} fill="none">
+      {/* Nét "bật" vẽ tay như trong truyện tranh, thay cho ngôi sao lấp lánh. */}
       <path
-        d="M12 1C13 8 16 11 23 12 16 13 13 16 12 23 11 16 8 13 1 12 8 11 11 8 12 1Z"
-        fill={fill}
-        stroke={INK}
-        strokeWidth="1.4"
-        strokeLinejoin="round"
+        d="M12 2.5v5.5M4.2 6.6l4 3.6M19.8 6.6l-4 3.6M2.5 14.5h5M16.5 14.5h5"
+        stroke="#17181d"
+        strokeWidth="2.6"
+        strokeLinecap="round"
       />
     </svg>
   )
@@ -59,8 +59,8 @@ function Check({ last = false }: { last?: boolean }) {
   return (
     <span
       className={cn(
-        'flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-[#0f172a] bg-white',
-        last && 'bg-[#fbcfe8]',
+        'flex size-7 shrink-0 items-center justify-center rounded-full border-2 border-[#17181d] bg-white',
+        last && 'bg-[#c9b6ff]',
       )}
     >
       {last ? (
@@ -69,7 +69,7 @@ function Check({ last = false }: { last?: boolean }) {
           <path d="M14 4l1 2M19 6l-2 1M18 10h2" strokeLinecap="round" />
         </svg>
       ) : (
-        <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="#db2777" strokeWidth="3">
+        <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="#e2452a" strokeWidth="3">
           <path d="M5 12l5 5 9-10" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )}
@@ -85,16 +85,16 @@ export function ExperimentArt() {
       <Card className="rotate-[-2deg]">
         <div className="flex items-start justify-between gap-3">
           <Lines widths={['110px', '76px']} />
-          <Squiggle className="-mt-2 h-10 w-14" color="#2563eb" />
+          <Squiggle className="-mt-2 h-10 w-14" color="#2f5bff" />
         </div>
-        <div className="mt-3 flex h-[72px] items-end gap-3 border-b-2 border-[#0f172a] px-1">
+        <div className="mt-3 flex h-[72px] items-end gap-3 border-b-2 border-[#17181d] px-1">
           {bars.map((h, i) => (
             <span
               key={i}
-              className="flex-1 rounded-t-md border-2 border-b-0 border-[#0f172a]"
+              className="flex-1 rounded-t-md border-2 border-b-0 border-[#17181d]"
               style={{
                 height: `${h}%`,
-                background: ['#93c5fd', '#a5b4fc', '#c4b5fd', '#f9a8d4'][i],
+                background: ['#8fbcff', '#a5b4fc', '#c9b6ff', '#c9b6ff'][i],
               }}
             />
           ))}
@@ -110,7 +110,7 @@ export function ExperimentArt() {
         {[0, 1, 2].map((i) => (
           <span key={i} className="flex flex-1 items-center">
             <Check />
-            <span className="h-0.5 flex-1 bg-[#db2777]" />
+            <span className="h-0.5 flex-1 bg-[#e2452a]" />
           </span>
         ))}
         <Check last />
@@ -125,7 +125,7 @@ export function ProtocolArt() {
     <div className="relative w-[290px]">
       <Card className="rotate-[1.5deg]">
         <div className="flex items-center gap-3">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-[#ec4899] text-white">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-[#ff5b2e] text-white">
             <svg
               viewBox="0 0 24 24"
               className="size-4"
@@ -141,23 +141,23 @@ export function ProtocolArt() {
         </div>
         <div className="mt-3 flex items-center gap-2 rounded-full bg-[#f1f5f9] p-1">
           <span className="h-4 flex-1" />
-          <span className="h-4 w-20 rounded-full bg-[#f472b6]" />
+          <span className="h-4 w-20 rounded-full bg-[#ff8a63]" />
         </div>
         <span className="mx-auto mt-3 block h-px bg-[#cbd5e1]" />
         <div className="mt-3 grid grid-cols-3 gap-2">
           {['FGSM', '≤ 60%', '5 ảnh'].map((t) => (
             <span
               key={t}
-              className="flex h-12 flex-col justify-between rounded-lg bg-[#f5f3ff] p-1.5 text-[11px] font-bold"
+              className="flex h-12 flex-col justify-between rounded-lg bg-[#ece6ff] p-1.5 text-[11px] font-bold"
             >
-              <span className="text-[#7c3aed]">“</span>
+              <span className="text-[#4b3ad6]">“</span>
               {t}
             </span>
           ))}
         </div>
       </Card>
       <span className="ink-chip float absolute -right-6 top-14 flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] font-bold">
-        <span className="size-3 rounded-sm bg-[#2563eb]" />
+        <span className="size-3 rounded-sm bg-[#2f5bff]" />
         eps 2, 4
       </span>
       <Sparkle className="absolute -left-6 -top-5 size-8" />
@@ -185,13 +185,13 @@ export function ReportArt() {
             </svg>
           </span>
           <span className="flex flex-1 flex-col justify-center gap-1.5">
-            <span className="h-1.5 w-full rounded-full bg-[#0f172a]" />
+            <span className="h-1.5 w-full rounded-full bg-[#17181d]" />
             <span className="h-1.5 w-3/4 rounded-full bg-[#cbd5e1]" />
             <span className="h-1.5 w-5/6 rounded-full bg-[#cbd5e1]" />
           </span>
         </div>
       </Card>
-      <span className="absolute -right-5 -top-6 flex size-20 rotate-12 items-center justify-center rounded-full border-2 border-dashed border-[#db2777] bg-[#fdf2f8] text-center text-[10px] leading-tight font-black text-[#be185d]">
+      <span className="absolute -right-5 -top-6 flex size-20 rotate-12 items-center justify-center rounded-full border-2 border-dashed border-[#e2452a] bg-[#fff1ec] text-center text-[10px] leading-tight font-black text-[#c23d12]">
         BẢN
         <br />
         CHÍNH
@@ -220,7 +220,7 @@ export function ReviewArt() {
           ].map((b) => (
             <span
               key={b.label}
-              className="relative h-20 overflow-hidden rounded-lg bg-gradient-to-b from-[#c7d2fe] to-[#64748b]"
+              className="relative h-20 overflow-hidden rounded-lg bg-gradient-to-b from-[#b9d6ff] to-[#64748b]"
             >
               <span
                 className="absolute bottom-3 left-1/2 h-7 w-12 -translate-x-1/2 rounded border-2"
@@ -240,7 +240,7 @@ export function ReviewArt() {
             <span
               key={t}
               className={cn(
-                'rounded-full border-2 border-[#0f172a] px-2 py-0.5 text-[10.5px] font-bold',
+                'rounded-full border-2 border-[#17181d] px-2 py-0.5 text-[10.5px] font-bold',
                 i === 1 ? 'bg-[#bbf7d0]' : 'bg-white',
               )}
             >
@@ -252,7 +252,7 @@ export function ReviewArt() {
           </span>
         </div>
       </Card>
-      <Sparkle className="absolute -right-4 -top-4 size-7" fill="#fde68a" />
+      <Sparkle className="absolute -right-4 -top-4 size-7" fill="#ffcb2e" />
     </div>
   )
 }
@@ -260,9 +260,9 @@ export function ReviewArt() {
 /** Người dùng: ba người chờ duyệt, người đầu đã được gán vai trò. */
 export function UsersArt() {
   const people = [
-    { c: '#2563eb', w: '92px', ok: true },
-    { c: '#db2777', w: '70px', ok: false },
-    { c: '#7c3aed', w: '84px', ok: false },
+    { c: '#2f5bff', w: '92px', ok: true },
+    { c: '#e2452a', w: '70px', ok: false },
+    { c: '#4b3ad6', w: '84px', ok: false },
   ]
   return (
     <div className="relative w-[270px]">
@@ -270,13 +270,13 @@ export function UsersArt() {
         {people.map((p, i) => (
           <span key={i} className="flex items-center gap-3">
             <span
-              className="size-8 rounded-full border-2 border-[#0f172a]"
+              className="size-8 rounded-full border-2 border-[#17181d]"
               style={{ background: p.c }}
             />
             <span className="h-2 rounded-full bg-[#cbd5e1]" style={{ width: p.w }} />
             <span
               className={cn(
-                'ml-auto rounded-full border-2 border-[#0f172a] px-2 text-[10.5px] font-bold',
+                'ml-auto rounded-full border-2 border-[#17181d] px-2 text-[10.5px] font-bold',
                 p.ok ? 'bg-[#bbf7d0]' : 'bg-white',
               )}
             >
@@ -285,7 +285,7 @@ export function UsersArt() {
           </span>
         ))}
       </Card>
-      <Sparkle className="absolute -left-5 -bottom-4 size-7" fill="#fbcfe8" />
+      <Sparkle className="absolute -left-5 -bottom-4 size-7" fill="#c9b6ff" />
     </div>
   )
 }

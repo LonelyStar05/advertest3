@@ -174,7 +174,7 @@ export function ModelStep({ draft, dispatch, errors }: StepProps) {
             onSelect={() => dispatch({ type: 'model', id: model.id })}
           >
             <span className="flex min-w-0 items-center gap-2.5">
-              <span className="tile size-8 [--tile-bg:#f5f3ff] [--tile-fg:#6d28d9]" aria-hidden>
+              <span className="tile size-8 [--tile-bg:#ece6ff] [--tile-fg:#4b3ad6]" aria-hidden>
                 <Boxes className="size-4" />
               </span>
               <span className="font-medium break-all">{model.name}</span>

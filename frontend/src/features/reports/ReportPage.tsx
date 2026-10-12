@@ -516,10 +516,7 @@ export function ReportPage() {
       {snapshot && (
         // Nội dung report trình bày như một tờ giấy: nền trắng, mép trên chuyển màu.
         <article className="panel relative overflow-hidden p-6 pt-8 md:p-10 md:pt-11">
-          <span
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#ec4899]"
-          />
+          <span aria-hidden className="absolute inset-x-0 top-0 h-1.5 stripe-bar" />
           <SnapshotView snapshot={snapshot} />
         </article>
       )}

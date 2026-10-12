@@ -83,7 +83,7 @@ export function LifecycleStepper({ stages }: { stages: LifecycleStage[] }) {
                   aria-hidden
                   className={cn(
                     'h-0.5 min-w-3 flex-1 rounded-full',
-                    done ? 'bg-gradient-to-r from-[#2563eb] to-[#7c3aed]' : 'bg-line',
+                    done ? 'bg-[var(--cobalt)]' : 'bg-line',
                   )}
                 />
               )}

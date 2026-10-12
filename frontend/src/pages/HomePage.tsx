@@ -88,7 +88,7 @@ export function HomePage() {
   return (
     <div className="enter mx-auto flex max-w-[1180px] flex-col gap-6 px-4 py-7 md:px-8 md:py-9">
       <PageHeader
-        title={<>Chào {givenName(me.full_name)} 👋</>}
+        title={<>Chào {givenName(me.full_name)}</>}
         description={
           me.roles.length > 0 && !flow.loading
             ? summarySentence(flow.stages, flow.experiments)
@@ -152,7 +152,7 @@ function NextActionCard({ next, loading }: { next: StageView | null; loading: bo
       <GradientWaves className="absolute inset-0 -z-10" scale={0.8} />
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-r from-[#1e1b4b]/80 via-[#1e1b4b]/45 to-transparent"
+        className="absolute inset-0 -z-10 bg-gradient-to-r from-[#0a2170]/80 via-[#0a2170]/45 to-transparent"
       />
       <FloatingDecor items={BANNER_DECOR} className="hidden md:block" />
       <div className="relative z-10 flex min-h-[184px] flex-col justify-center gap-5 p-6 text-white sm:flex-row sm:items-center sm:justify-between md:px-8 md:pr-[30%]">
@@ -163,11 +163,11 @@ function NextActionCard({ next, loading }: { next: StageView | null; loading: bo
             </span>
             <div className="flex flex-col gap-1">
               <p className="text-[20px] font-semibold tracking-[-0.02em]">
-                Bạn đã xong hết việc của mình 🎉
+                Không còn việc nào chờ bạn
               </p>
               <p className="text-[14.5px] leading-6 text-white/85">
-                Checklist "Quy trình của nhóm" cho biết mọi người đang ở bước nào, nếu bạn muốn hỗ
-                trợ ai đó.
+                Muốn giúp đồng đội? Xem checklist "Quy trình của nhóm" để biết mọi người đang ở bước
+                nào.
               </p>
             </div>
           </div>
@@ -175,7 +175,7 @@ function NextActionCard({ next, loading }: { next: StageView | null; loading: bo
           <>
             <div className="flex max-w-[60ch] flex-col gap-1.5">
               <span className="inline-flex items-center gap-2 self-start rounded-full bg-white/15 px-3 py-1 text-[12.5px] font-semibold backdrop-blur">
-                <span className="status-dot live size-1.5 text-[#fde68a]" aria-hidden />
+                <span className="status-dot live size-1.5 text-[#ffcb2e]" aria-hidden />
                 Việc nên làm tiếp
               </span>
               <p className="text-[22px] leading-7 font-semibold tracking-[-0.02em]">{next.title}</p>
@@ -223,7 +223,7 @@ function TeamPulse({ experiments }: { experiments: ExperimentSummary[] }) {
       label: 'Đang được review',
       value: by('submitted_for_review', 'in_review'),
       icon: Eye,
-      tile: '[--tile-bg:#f5f3ff] [--tile-fg:#6d28d9]',
+      tile: '[--tile-bg:#ece6ff] [--tile-fg:#4b3ad6]',
       to: '/experiments?status=in_review',
     },
     {
@@ -406,10 +406,7 @@ function RoleBlock({ role }: { role: Role }) {
   return (
     <section className="panel flex flex-col gap-3 p-5">
       <h3 className="flex items-center gap-2 text-[13px] font-semibold text-muted-foreground">
-        <span
-          aria-hidden
-          className="size-1.5 rounded-full bg-gradient-to-r from-[#2563eb] to-[#ec4899]"
-        />
+        <span aria-hidden className="size-1.5 rounded-full bg-[var(--tomato)]" />
         {ROLE_LABELS[role]}
       </h3>
       {role === 'admin' ? (

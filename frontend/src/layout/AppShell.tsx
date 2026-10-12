@@ -102,7 +102,7 @@ function ShellLayout() {
           id="noi-dung"
           className="min-w-0 flex-1 pr-[env(safe-area-inset-right)] pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
         >
-          <Outlet />
+          <PageTransition />
         </main>
       </div>
       <BottomTabs items={items} />
@@ -110,8 +110,25 @@ function ShellLayout() {
   )
 }
 
+/**
+ * Trang con đổi theo đường dẫn: khóa theo pathname để mỗi lần chuyển trang nội dung "đặt xuống" lại
+ * và vệt màu ba khúc quét ngang đầu màn hình. Chỉ đổi khi sang trang khác, không chạy lại khi đổi
+ * query (tab, bộ lọc).
+ */
+function PageTransition() {
+  const { pathname } = useLocation()
+  return (
+    <>
+      <span key={`wipe-${pathname}`} aria-hidden className="page-wipe" />
+      <div key={pathname} className="page-enter">
+        <Outlet />
+      </div>
+    </>
+  )
+}
+
 const ICON_BUTTON =
-  'inline-flex size-11 shrink-0 items-center justify-center rounded-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50'
+  'inline-flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50'
 
 /** Đổi giao diện sáng/tối (mặc định sáng). */
 function ThemeButton() {
@@ -187,9 +204,10 @@ function SystemNotice({ running }: { running: number }) {
 
 function navClass({ isActive }: { isActive: boolean }): string {
   return cn(
-    'relative flex min-h-11 items-center gap-3 rounded-[10px] px-3 text-[14px] font-medium transition-[color,background-color] duration-150 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none max-xl:justify-center',
-    isActive && 'bg-pink-soft font-semibold text-foreground [&>svg]:text-pink',
-    !isActive && 'text-muted-foreground hover:bg-muted hover:text-foreground',
+    'wiggle-hover relative flex min-h-11 items-center gap-3 rounded-full px-3 text-[14px] font-medium transition-[color,background-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none max-xl:justify-center',
+    isActive &&
+      'nav-active bg-[var(--sun)] font-semibold text-[#17181d] shadow-[0_0_0_1.5px_var(--ink-line),0_3px_0_var(--ink-line)]',
+    !isActive && 'text-muted-foreground hover:translate-x-0.5 hover:bg-muted hover:text-foreground',
   )
 }
 
@@ -254,11 +272,8 @@ function ComputeCard({ running }: { running: number }) {
   })
   const ok = health.data?.status === 'ok'
   return (
-    <div className="relative hidden overflow-hidden rounded-xl border border-line bg-surface-solid p-3 xl:block">
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#2563eb] via-[#7c3aed] to-[#ec4899]"
-      />
+    <div className="relative hidden overflow-hidden rounded-2xl bg-surface-solid p-3 shadow-[0_0_0_1.5px_var(--ink-line),0_4px_0_var(--ink-line)] xl:block">
+      <span aria-hidden className="stripe-bar absolute inset-x-0 top-0 h-1.5" />
       <span className="flex items-center gap-2 text-[13px] font-semibold">
         <span
           aria-hidden
@@ -271,12 +286,12 @@ function ComputeCard({ running }: { running: number }) {
           ? `${running} experiment đang chạy trên worker của nhóm.`
           : 'Worker đang rảnh, có thể nhận experiment mới.'}
       </span>
-      <span className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+      <span
+        className="mt-2 flex h-2 overflow-hidden rounded-full bg-muted shadow-[0_0_0_1.5px_var(--ink-line)]"
+        aria-hidden
+      >
         <span
-          className={cn(
-            'rounded-full bg-gradient-to-r from-[#2563eb] to-[#7c3aed]',
-            running > 0 && 'shimmer',
-          )}
+          className={cn('rounded-full bg-[var(--cobalt)]', running > 0 && 'shimmer')}
           style={{ width: running > 0 ? `${Math.min(100, 30 + running * 20)}%` : '8%' }}
         />
       </span>
@@ -370,7 +385,7 @@ export function SideNav({
   return (
     <aside
       aria-label="Điều hướng chính"
-      className="sticky top-0 z-20 hidden h-dvh w-[76px] shrink-0 flex-col gap-3 border-r border-line bg-surface-solid pl-[env(safe-area-inset-left)] md:flex xl:w-60"
+      className="sticky top-0 z-20 hidden h-dvh w-[76px] shrink-0 flex-col gap-3 border-r-[1.5px] border-[var(--ink-line)] bg-surface-solid pl-[env(safe-area-inset-left)] md:flex xl:w-60"
     >
       <div className="px-2 pt-2">
         <Brand />
@@ -381,7 +396,7 @@ export function SideNav({
             to={create.path}
             aria-label={create.label}
             title={create.label}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[10px] bg-primary px-4 text-[14px] font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-navy-hover focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="wiggle-hover inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-primary px-4 text-[14px] font-semibold text-primary-foreground shadow-[0_0_0_1.5px_var(--ink-line),0_4px_0_var(--cobalt)] transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-y-0.5 hover:shadow-[0_0_0_1.5px_var(--ink-line),0_6px_0_var(--cobalt)] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none active:translate-y-[3px] active:shadow-[0_0_0_1.5px_var(--ink-line),0_1px_0_var(--cobalt)]"
           >
             <Plus className="size-4 shrink-0" aria-hidden />
             <span className="hidden xl:inline">{create.label}</span>
@@ -393,7 +408,7 @@ export function SideNav({
             onClick={onSearch}
             title="Tìm nhanh (Ctrl K)"
             aria-label="Tìm nhanh"
-            className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-line bg-surface-solid px-3 text-[14px] text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none max-xl:justify-center max-xl:px-0"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border-[1.5px] border-[var(--ink-line)] bg-surface-solid px-3 text-[14px] text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none max-xl:justify-center max-xl:px-0"
           >
             <Search className="size-4 shrink-0" aria-hidden />
             <span className="hidden flex-1 text-left xl:inline">Tìm nhanh</span>

@@ -315,7 +315,7 @@ function Heatmap({ groups }: { groups: HeatGroup[] }) {
   return (
     <section aria-labelledby="ma-tran-diem-yeu" className="panel flex flex-col gap-4 p-5">
       <div className="flex items-start gap-3">
-        <span className="tile size-9 [--tile-bg:#ede9fe] [--tile-fg:#6d28d9]">
+        <span className="tile size-9 [--tile-bg:#ede9fe] [--tile-fg:#4b3ad6]">
           <Grid3x3 aria-hidden="true" className="size-5" />
         </span>
         <div className="min-w-0 space-y-1">
