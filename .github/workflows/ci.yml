@@ -152,7 +152,18 @@ jobs:
             !tests/fixtures/checksums.json
           key: fixtures-${{ hashFiles('tests/fixtures/checksums.json') }}
       - run: make fixtures
-      - run: uv run --no-sync pytest -m db backend tests/acceptance
+      - run: uv run --no-sync pytest -m db backend tests/acceptance --junitxml=pytest-db.xml
+      # Tên test lỗi thành annotation (đọc được trên trang CI và qua API, không cần tải log).
+      - name: Báo test lỗi
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          for case in ET.parse("pytest-db.xml").iter("testcase"):
+              for bad in list(case.findall("failure")) + list(case.findall("error")):
+                  msg = (bad.get("message") or "").replace("\n", " ")[:300]
+                  print(f"::error title={case.get('classname')}.{case.get('name')}::{msg}")
+          PY
       - run: make test-acceptance
 
   e2e:

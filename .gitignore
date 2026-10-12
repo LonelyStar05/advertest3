@@ -31,3 +31,4 @@ tests/fixtures/*
 
 # Vercel CLI
 .vercel/
+pytest-db.xml
