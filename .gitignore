@@ -28,3 +28,6 @@ tests/fixtures/*
 !tests/fixtures/LICENSE.md
 !tests/fixtures/manifest.json
 !tests/fixtures/golden/
+
+# Vercel CLI
+.vercel/
