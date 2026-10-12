@@ -40,6 +40,8 @@ COPY configs ./configs
 RUN uv sync --frozen --no-dev --extra "$TORCH"
 
 COPY docker/api/entrypoint.sh /usr/local/bin/entrypoint.sh
+# Bỏ CRLF nếu repo được clone trên Windows mà chưa có .gitattributes.
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 RUN useradd --system --uid 10001 --home-dir /app advertest \
     && mkdir -p /app/cache && chown advertest /app/cache
 USER advertest

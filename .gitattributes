@@ -1,0 +1,8 @@
+# Script chạy trong container Linux phải giữ LF, kể cả khi clone trên Windows (core.autocrlf=true);
+# CRLF làm "#!/bin/sh\r" không chạy được và container API thoát với mã 255.
+*.sh text eol=lf
+*.py text eol=lf
+*.sql text eol=lf
+Dockerfile* text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
