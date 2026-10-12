@@ -12,7 +12,8 @@ export default defineConfig({
   // song thì kết quả phụ thuộc thứ tự (người dùng chốt ở Phase 4 Group 7).
   workers: 1,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // `github`: test lỗi hiện thành annotation trên GitHub Actions (đọc được qua API, không cần log).
+  reporter: process.env.CI ? [['list'], ['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'retain-on-failure',
