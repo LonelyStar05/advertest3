@@ -70,8 +70,14 @@ say "Nạp attack catalog, máy chạy local-dev và tài khoản admin"
 say "Nạp mô tả attack (tên, giải thích, mức gợi ý) từ configs/attacks"
 "${DC[@]}" exec -T api advertest-admin catalog sync --dir configs/attacks --as "$ADVERTEST_ADMIN_EMAIL"
 
-say "Nạp model YOLOv8n, dataset và slice 5 ảnh"
-"${DC[@]}" exec -T api advertest-admin import-local --store /data/store --as "$ADVERTEST_ADMIN_EMAIL"
+# data/ không nằm trong git (.gitignore): clone mới thì chưa có, bỏ qua thay vì dừng cả script.
+if [ -d data/store ]; then
+  say "Nạp model YOLOv8n, dataset và slice 5 ảnh"
+  "${DC[@]}" exec -T api advertest-admin import-local --store /data/store --as "$ADVERTEST_ADMIN_EMAIL"
+else
+  say "Bỏ qua dữ liệu mẫu: chưa có thư mục data/store"
+  echo "Chép thư mục data/ (gồm store/ và kitti-fixture/) vào gốc repo rồi chạy lại start.sh để có model và ảnh mẫu."
+fi
 
 # 5. Worker: token mới mỗi lần chạy (token cũ hết hiệu lực), lưu vào .env.
 say "Khởi động worker CPU"
